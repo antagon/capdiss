@@ -1,0 +1,219 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <errno.h>
+#include <pcap.h>
+#include <getopt.h>
+#include <lua.h>
+#include <lauxlib.h>
+#include <lualib.h>
+
+#include "scriptenv.h"
+#include "capdiss.h"
+
+static void
+usage (const char *p)
+{
+	fprintf (stderr, "Usage: %s -f <PROGFILE>[ -f ...] <FILE>\nUsage: %s -e '<PROGTEXT>'[ -e ...] <FILE>\n\n\
+Options:\n \
+ -e, --source='PROGTEXT'  load LUA script from argument\n \
+ -f, --file=PROGFILE      load LUA script from file\n \
+ -v, --version            show version information\n \
+ -h, --help               show usage information (this text)\n", p, p);
+}
+
+static void
+version (const char *p)
+{
+	fprintf (stderr, "%s %u.%u.%u\n%s\n", p, CAPDISS_VERSION_MAJOR, CAPDISS_VERSION_MINOR, CAPDISS_VERSION_PATCH, LUA_VERSION);
+}
+
+int
+main (int argc, char *argv[])
+{
+	pcap_t *pcap_res;
+	struct pcap_pkthdr *pkt_hdr;
+	const u_char *pkt_data;
+	char errbuff[PCAP_ERRBUF_SIZE];
+	struct scriptenv script_env;
+	struct script *script;
+	struct option opt_long[] = {
+		{ "file", required_argument, 0, 'f' },
+		{ "source", required_argument, 0, 'e' },
+		{ "help", no_argument, 0, 'h' },
+		{ "version", no_argument, 0, 'v' },
+		{ NULL, 0, 0, 0 }
+	};
+	int rval, exitno, c, opt_index, src_arg_num;
+
+	pcap_res = NULL;
+	exitno = EXIT_SUCCESS;
+
+	scriptenv_init (&script_env);
+
+	while ( (c = getopt_long (argc, argv, "f:e:hv", opt_long, &opt_index)) != -1 ){
+		switch ( c ){
+			case 'f':
+				script = script_new ();
+
+				if ( script == NULL ){
+					fprintf (stderr, "%s: cannot allocate memory: %s\n", argv[0], strerror (errno));
+					exitno = EXIT_FAILURE;
+					goto cleanup;
+				}
+
+				script->file = strdup (optarg);
+
+				if ( script->file == NULL ){
+					fprintf (stderr, "%s: cannot allocate memory: %s\n", argv[0], strerror (errno));
+					exitno = EXIT_FAILURE;
+					goto cleanup;
+				}
+
+				scriptenv_add (&script_env, script);
+				break;
+
+			case 'e':
+				script = script_new ();
+
+				if ( script == NULL ){
+					fprintf (stderr, "%s: cannot allocate memory: %s\n", argv[0], strerror (errno));
+					exitno = EXIT_FAILURE;
+					goto cleanup;
+				}
+
+				script->source = strdup (optarg);
+
+				if ( script->source == NULL ){
+					fprintf (stderr, "%s: cannot allocate memory: %s\n", argv[0], strerror (errno));
+					exitno = EXIT_FAILURE;
+					goto cleanup;
+				}
+
+				scriptenv_add (&script_env, script);
+				break;
+
+			case 'h':
+				usage (argv[0]);
+				exitno = EXIT_SUCCESS;
+				goto cleanup;
+
+			case 'v':
+				version (argv[0]);
+				exitno = EXIT_SUCCESS;
+				goto cleanup;
+
+			default:
+				usage (argv[0]);
+				exitno = EXIT_FAILURE;
+				goto cleanup;
+		}
+	}
+
+	if ( (argc - optind) == 0 ){
+		fprintf (stderr, "%s: no capture file specified.\n", argv[0]);
+		usage (argv[0]);
+		exitno = EXIT_FAILURE;
+		goto cleanup;
+	}
+
+	if ( script_env.head == NULL ){
+		fprintf (stderr, "%s: no LUA scripts specified.\n", argv[0]);
+		usage (argv[0]);
+		exitno = EXIT_FAILURE;
+		goto cleanup;
+	}	
+
+	script = script_env.head;
+
+	src_arg_num = 0;
+
+	while ( script != NULL ){
+		// FIXME: check return value
+		script->state = luaL_newstate ();
+		// TODO: check which libraries we want to open (or allow this to be overwritten with argument)
+		luaL_openlibs (script->state);
+
+		if ( script->source != NULL ){
+			rval = luaL_loadstring (script->state, script->source);
+
+			if ( rval != 0 ){
+				fprintf (stderr, "%s: cannot load LUA script from source argument %d: %s\n", argv[0], ++src_arg_num, lua_tostring (script->state, -1));
+				exitno = EXIT_FAILURE;
+				goto cleanup;
+			}
+
+		} else if ( script->file != NULL ){
+			rval = luaL_loadfile (script->state, script->file);
+
+			if ( rval != 0 ){
+				fprintf (stderr, "%s: cannot load LUA script from file '%s': %s\n", argv[0], script->file, lua_tostring (script->state, -1));
+				exitno = EXIT_FAILURE;
+				goto cleanup;
+			}
+
+		} else {
+			fprintf (stderr, "this case should not happen!!\n");
+			exitno = EXIT_FAILURE;
+			goto cleanup;
+		}
+
+		script = script->next;
+	}
+
+	pcap_res = pcap_open_offline (argv[optind], errbuff);
+
+	if ( pcap_res == NULL ){
+		fprintf (stderr, "%s: cannot open file '%s': %s\n", argv[0], argv[1], errbuff);
+		exitno = EXIT_FAILURE;
+		goto cleanup;
+	}
+
+	while ( 1 ){
+		rval = pcap_next_ex (pcap_res, &pkt_hdr, &pkt_data);
+
+		if ( rval == -1 ){
+			fprintf (stderr, "%s: reading a packet from file '%s' failed: %s\n", argv[0], argv[1], pcap_geterr (pcap_res));
+			exitno = EXIT_FAILURE;
+			goto cleanup;
+		} else if ( rval == -2 ){
+			// EOF
+			break;
+		}
+
+		script = script_env.head;
+
+		while ( script != NULL ){
+
+			lua_pushlstring (script->state, (const char*) pkt_data, pkt_hdr->len);
+			lua_setglobal (script->state, "pkt");
+
+			if ( script->source != NULL ){
+				rval = luaL_dostring (script->state, script->source);
+			} else if ( script->file != NULL ){
+				rval = luaL_dofile (script->state, script->file);
+			} else {
+				// This case should not happen
+				script = script->next;
+				continue;
+			}
+
+			if ( rval != 0 ){
+				fprintf (stderr, "%s: script execution failed: %s\n", argv[0], lua_tostring (script->state, -1));
+				exitno = EXIT_FAILURE;
+				goto cleanup;
+			}
+
+			script = script->next;
+		}
+	}
+
+cleanup:
+	if ( pcap_res != NULL )
+		pcap_close (pcap_res);
+
+	scriptenv_free (&script_env);
+
+	return exitno;
+}
+
