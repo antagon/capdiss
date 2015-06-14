@@ -1,8 +1,9 @@
+/*
+ * Copyright (c) 2015 Dan Antagon <antagon@codeward.org>
+ */
 #include <stdlib.h>
 #include <string.h>
 #include <lua.h>
-#include <lauxlib.h>
-#include <lualib.h>
 
 #include "scriptenv.h"
 

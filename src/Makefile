@@ -15,7 +15,7 @@ main.o: main.c
 scriptenv.o: scriptenv.c
 	$(CC) $(CFLAGS) -c $^
 
-install:
+install: $(NAME)
 	install --mode 0755 $(NAME) /usr/local/bin
 
 clean:

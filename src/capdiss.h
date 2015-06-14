@@ -1,3 +1,6 @@
+/*
+ * Copyright (c) 2015 Dan Antagon <antagon@codeward.org>
+ */
 #ifndef _CAPDISS_H
 #define _CAPDISS_H
 

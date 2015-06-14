@@ -1,3 +1,6 @@
+/*
+ * Copyright (c) 2015 Dan Antagon <antagon@codeward.org>
+ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -16,8 +19,8 @@ usage (const char *p)
 {
 	fprintf (stderr, "Usage: %s -f <PROGFILE>[ -f ...] <FILE>\nUsage: %s -e '<PROGTEXT>'[ -e ...] <FILE>\n\n\
 Options:\n \
- -e, --source='PROGTEXT'  load LUA script from argument\n \
- -f, --file=PROGFILE      load LUA script from file\n \
+ -e, --source='PROGTEXT'  load Lua script source code\n \
+ -f, --file=PROGFILE      load Lua script file\n \
  -v, --version            show version information\n \
  -h, --help               show usage information (this text)\n", p, p);
 }
@@ -118,7 +121,7 @@ main (int argc, char *argv[])
 	}
 
 	if ( script_env.head == NULL ){
-		fprintf (stderr, "%s: no LUA scripts specified.\n", argv[0]);
+		fprintf (stderr, "%s: no Lua scripts specified.\n", argv[0]);
 		usage (argv[0]);
 		exitno = EXIT_FAILURE;
 		goto cleanup;
@@ -131,14 +134,24 @@ main (int argc, char *argv[])
 	while ( script != NULL ){
 		// FIXME: check return value
 		script->state = luaL_newstate ();
-		// TODO: check which libraries we want to open (or allow this to be overwritten with argument)
+
 		luaL_openlibs (script->state);
+		/*luaopen_base (script->state);
+		luaopen_coroutine (script->state);
+		luaopen_table (script->state);
+		luaopen_io (script->state);
+		luaopen_os (script->state);
+		luaopen_string (script->state);
+		luaopen_bit32 (script->state);
+		luaopen_math (script->state);
+		luaopen_debug (script->state);
+		luaopen_package (script->state);*/
 
 		if ( script->source != NULL ){
 			rval = luaL_loadstring (script->state, script->source);
 
 			if ( rval != 0 ){
-				fprintf (stderr, "%s: cannot load LUA script from source argument %d: %s\n", argv[0], ++src_arg_num, lua_tostring (script->state, -1));
+				fprintf (stderr, "%s: cannot load Lua script from source argument %d: %s\n", argv[0], ++src_arg_num, lua_tostring (script->state, -1));
 				exitno = EXIT_FAILURE;
 				goto cleanup;
 			}
@@ -147,7 +160,7 @@ main (int argc, char *argv[])
 			rval = luaL_loadfile (script->state, script->file);
 
 			if ( rval != 0 ){
-				fprintf (stderr, "%s: cannot load LUA script from file '%s': %s\n", argv[0], script->file, lua_tostring (script->state, -1));
+				fprintf (stderr, "%s: cannot load Lua script from file '%s': %s\n", argv[0], script->file, lua_tostring (script->state, -1));
 				exitno = EXIT_FAILURE;
 				goto cleanup;
 			}

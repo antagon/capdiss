@@ -1,3 +1,6 @@
+/*
+ * Copyright (c) 2015 Dan Antagon <antagon@codeward.org>
+ */
 #ifndef _SCRIPTENV_H
 #define _SCRIPTENV_H
 
@@ -12,7 +15,6 @@ struct scriptenv
 struct script
 {
 	lua_State *state;
-	lua_State *state_bak;
 	char *source;
 	char *file;
 	struct script *prev;
