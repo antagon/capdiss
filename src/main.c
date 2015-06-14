@@ -17,18 +17,18 @@
 static void
 usage (const char *p)
 {
-	fprintf (stderr, "Usage: %s -f <PROGFILE>[ -f ...] <FILE>\nUsage: %s -e '<PROGTEXT>'[ -e ...] <FILE>\n\n\
+	fprintf (stderr, "Usage: %s <OPTIONS> <FILE>\n\n\
 Options:\n \
  -e, --source='PROGTEXT'  load Lua script source code\n \
  -f, --file=PROGFILE      load Lua script file\n \
  -v, --version            show version information\n \
- -h, --help               show usage information (this text)\n", p, p);
+ -h, --help               show usage information (this text)\n", p);
 }
 
 static void
 version (const char *p)
 {
-	fprintf (stderr, "%s %u.%u.%u\n%s\n", p, CAPDISS_VERSION_MAJOR, CAPDISS_VERSION_MINOR, CAPDISS_VERSION_PATCH, LUA_VERSION);
+	fprintf (stderr, "%s %u.%u.%u, %s\n", p, CAPDISS_VERSION_MAJOR, CAPDISS_VERSION_MINOR, CAPDISS_VERSION_PATCH, LUA_VERSION);
 }
 
 int
