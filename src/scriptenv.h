@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015 Dan Antagon <antagon@codeward.org>
+ * Copyright (c) 2015 CodeWard.org
  */
 #ifndef _SCRIPTENV_H
 #define _SCRIPTENV_H

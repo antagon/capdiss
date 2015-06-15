@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015 Dan Antagon <antagon@codeward.org>
+ * Copyright (c) 2015 CodeWard.org
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -57,25 +57,6 @@ main (int argc, char *argv[])
 	while ( (c = getopt_long (argc, argv, "f:e:hv", opt_long, &opt_index)) != -1 ){
 		switch ( c ){
 			case 'f':
-				script = script_new ();
-
-				if ( script == NULL ){
-					fprintf (stderr, "%s: cannot allocate memory: %s\n", argv[0], strerror (errno));
-					exitno = EXIT_FAILURE;
-					goto cleanup;
-				}
-
-				script->file = strdup (optarg);
-
-				if ( script->file == NULL ){
-					fprintf (stderr, "%s: cannot allocate memory: %s\n", argv[0], strerror (errno));
-					exitno = EXIT_FAILURE;
-					goto cleanup;
-				}
-
-				scriptenv_add (&script_env, script);
-				break;
-
 			case 'e':
 				script = script_new ();
 
@@ -85,12 +66,22 @@ main (int argc, char *argv[])
 					goto cleanup;
 				}
 
-				script->source = strdup (optarg);
+				if ( c == 'f' ){
+					script->file = strdup (optarg);
 
-				if ( script->source == NULL ){
-					fprintf (stderr, "%s: cannot allocate memory: %s\n", argv[0], strerror (errno));
-					exitno = EXIT_FAILURE;
-					goto cleanup;
+					if ( script->file == NULL ){
+						fprintf (stderr, "%s: cannot allocate memory: %s\n", argv[0], strerror (errno));
+						exitno = EXIT_FAILURE;
+						goto cleanup;
+					}
+				} else if ( c == 'e' ){
+					script->source = strdup (optarg);
+
+					if ( script->source == NULL ){
+						fprintf (stderr, "%s: cannot allocate memory: %s\n", argv[0], strerror (errno));
+						exitno = EXIT_FAILURE;
+						goto cleanup;
+					}
 				}
 
 				scriptenv_add (&script_env, script);
@@ -127,9 +118,9 @@ main (int argc, char *argv[])
 		goto cleanup;
 	}	
 
-	script = script_env.head;
-
 	src_arg_num = 0;
+
+	script = script_env.head;
 
 	while ( script != NULL ){
 		// FIXME: check return value
@@ -166,9 +157,9 @@ main (int argc, char *argv[])
 			}
 
 		} else {
-			fprintf (stderr, "this case should not happen!!\n");
-			exitno = EXIT_FAILURE;
-			goto cleanup;
+			// This case should not happen
+			script = script->next;
+			continue;
 		}
 
 		script = script->next;
@@ -197,7 +188,6 @@ main (int argc, char *argv[])
 		script = script_env.head;
 
 		while ( script != NULL ){
-
 			lua_pushlstring (script->state, (const char*) pkt_data, pkt_hdr->len);
 			lua_setglobal (script->state, "pkt");
 

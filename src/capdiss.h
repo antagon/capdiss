@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015 Dan Antagon <antagon@codeward.org>
+ * Copyright (c) 2015 CodeWard.org
  */
 #ifndef _CAPDISS_H
 #define _CAPDISS_H
