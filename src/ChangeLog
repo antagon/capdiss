@@ -1,0 +1,10 @@
+version 0.1.0
+-------------
+
+* Initial version release.
+
+* Support for methods: Capdiss.begin (), Capdiss.each (frame), Capdiss.finish
+().
+
+* Load scripts from source (option -e) or from file (option -f).
+

@@ -1,0 +1,10 @@
+version 0.2.0
+-------------
+
+* Support for Berkeley Packet Filters, this allows to filter out irelevant
+content on Capdiss level instead of programming it directly in Lua.
+
+* Pass argument/s to a script that is being read from a file. This allows to
+specify run options like a user would normally do if running the script from
+the shell.
+
