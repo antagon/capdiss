@@ -200,9 +200,11 @@ main (int argc, char *argv[])
 		while ( script != NULL ){
 
 			if ( capdiss_get_table_item (script->state, "each", LUA_TFUNCTION) == 0 ){
+				// FIXME: add stack size check (lua_checkstack)
+				lua_pushnumber (script->state, pkt_hdr->ts.tv_sec);
 				lua_pushlstring (script->state, (const char*) pkt_data, pkt_hdr->len);
 
-				rval = lua_pcall (script->state, 1, 0, 0);
+				rval = lua_pcall (script->state, 2, 0, 0);
 
 				if ( rval != LUA_OK ){
 					fprintf (stderr, "%s: cannot execute 'each' method: %s\n", argv[0], lua_tostring (script->state, -1));
