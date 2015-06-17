@@ -9,10 +9,10 @@ function Capdiss.begin ()
 	print ("Begin parsing...")
 end
 
-function Capdiss.each (frame)
+function Capdiss.each (ts, frame)
 	i = i + 1
 
-	print ("Pkt no. " .. i)
+	print (ts .. " :: pkt no. " .. i)
 end
 
 function Capdiss.finish ()
