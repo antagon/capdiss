@@ -122,7 +122,7 @@ main (int argc, char *argv[])
 	pcap_res = pcap_open_offline (argv[optind], errbuff);
 
 	if ( pcap_res == NULL ){
-		fprintf (stderr, "%s: cannot open file '%s': %s\n", argv[0], argv[1], errbuff);
+		fprintf (stderr, "%s: cannot open file '%s': %s\n", argv[0], argv[optind], errbuff);
 		exitno = EXIT_FAILURE;
 		goto cleanup;
 	}
