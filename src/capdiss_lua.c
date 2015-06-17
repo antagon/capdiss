@@ -45,6 +45,7 @@ capdiss_get_table_item (lua_State *lua_state, const char *name, int type)
 	if ( rval == 1 )
 		return 1;
 
+	// FIXME: add stack size check (lua_checkstack)
 	lua_pushstring (lua_state, name);
 	lua_gettable (lua_state, 1);
 
