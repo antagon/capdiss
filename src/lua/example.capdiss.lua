@@ -3,16 +3,20 @@
 --
 Capdiss = {}
 
+i = 0
+
 function Capdiss.begin ()
-	print ("Parsing now...")
+	print ("Begin parsing...")
 end
 
 function Capdiss.each (frame)
-	print ("Pkt...")
+	i = i + 1
+
+	print ("Pkt no. " .. i)
 end
 
 function Capdiss.finish ()
-	print ("Done parsing...")
+	print ("Done parsing ... " .. i .. " packets processed.")
 end
 
 
