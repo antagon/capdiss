@@ -183,10 +183,7 @@ main (int argc, char *argv[])
 		script = script->next;
 	}
 
-/*
-*/
-
-	while ( 1 ){
+	for ( ;; ){
 		rval = pcap_next_ex (pcap_res, &pkt_hdr, &pkt_data);
 
 		if ( rval == -1 ){

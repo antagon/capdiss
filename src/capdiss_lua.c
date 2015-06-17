@@ -6,7 +6,7 @@
 
 #include "capdiss_lua.h"
 
-#if DEBUG
+#ifdef DEBUG
 static void
 capdiss_dump_stack (lua_State *lua_state)
 {
@@ -27,8 +27,10 @@ capdiss_get_table (lua_State *lua_state, const char *name)
 {
 	lua_getglobal (lua_state, name);
 
-	if ( ! lua_istable (lua_state, -1) )
+	if ( ! lua_istable (lua_state, -1) ){
+		lua_remove (lua_state, -1);
 		return 1;
+	}
 
 	return 0;
 }
@@ -40,18 +42,18 @@ capdiss_get_table_item (lua_State *lua_state, const char *name, int type)
 
 	rval = capdiss_get_table (lua_state, "Capdiss");
 
-	if ( rval == 1 ){
-		fprintf (stderr, "table Capdiss not found...\n");
+	if ( rval == 1 )
 		return 1;
-	}
 
 	lua_pushstring (lua_state, name);
 	lua_gettable (lua_state, 1);
 
-	if ( lua_type (lua_state, -1) != type )
+	if ( lua_type (lua_state, -1) != type ){
+		lua_remove (lua_state, -2);
 		return 1;
+	}
 
-#if DEBUG
+#ifdef DEBUG
 	capdiss_dump_stack (lua_state);
 #endif
 
