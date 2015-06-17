@@ -12,6 +12,7 @@
 #include <lualib.h>
 
 #include "scriptenv.h"
+#include "capdiss_lua.h"
 #include "capdiss.h"
 
 static void
@@ -118,12 +119,19 @@ main (int argc, char *argv[])
 		goto cleanup;
 	}	
 
+	pcap_res = pcap_open_offline (argv[optind], errbuff);
+
+	if ( pcap_res == NULL ){
+		fprintf (stderr, "%s: cannot open file '%s': %s\n", argv[0], argv[1], errbuff);
+		exitno = EXIT_FAILURE;
+		goto cleanup;
+	}
+
 	src_arg_num = 0;
 
 	script = script_env.head;
 
 	while ( script != NULL ){
-		// FIXME: check return value
 		script->state = luaL_newstate ();
 
 		luaL_openlibs (script->state);
@@ -139,7 +147,7 @@ main (int argc, char *argv[])
 		luaopen_package (script->state);*/
 
 		if ( script->source != NULL ){
-			rval = luaL_loadstring (script->state, script->source);
+			rval = luaL_dostring (script->state, script->source);
 
 			if ( rval != 0 ){
 				fprintf (stderr, "%s: cannot load Lua script from source argument %d: %s\n", argv[0], ++src_arg_num, lua_tostring (script->state, -1));
@@ -148,7 +156,7 @@ main (int argc, char *argv[])
 			}
 
 		} else if ( script->file != NULL ){
-			rval = luaL_loadfile (script->state, script->file);
+			rval = luaL_dofile (script->state, script->file);
 
 			if ( rval != 0 ){
 				fprintf (stderr, "%s: cannot load Lua script from file '%s': %s\n", argv[0], script->file, lua_tostring (script->state, -1));
@@ -162,16 +170,21 @@ main (int argc, char *argv[])
 			continue;
 		}
 
+		if ( capdiss_get_table_item (script->state, "begin", LUA_TFUNCTION) == 0 ){
+			rval = lua_pcall (script->state, 0, 0, 0);
+
+			if ( rval != LUA_OK ){
+				fprintf (stderr, "%s: cannot execute 'begin' method: %s\n", argv[0], lua_tostring (script->state, -1));
+				exitno = EXIT_FAILURE;
+				goto cleanup;
+			}
+		}
+
 		script = script->next;
 	}
 
-	pcap_res = pcap_open_offline (argv[optind], errbuff);
-
-	if ( pcap_res == NULL ){
-		fprintf (stderr, "%s: cannot open file '%s': %s\n", argv[0], argv[1], errbuff);
-		exitno = EXIT_FAILURE;
-		goto cleanup;
-	}
+/*
+*/
 
 	while ( 1 ){
 		rval = pcap_next_ex (pcap_res, &pkt_hdr, &pkt_data);
@@ -188,27 +201,37 @@ main (int argc, char *argv[])
 		script = script_env.head;
 
 		while ( script != NULL ){
-			lua_pushlstring (script->state, (const char*) pkt_data, pkt_hdr->len);
-			lua_setglobal (script->state, "pkt");
 
-			if ( script->source != NULL ){
-				rval = luaL_dostring (script->state, script->source);
-			} else if ( script->file != NULL ){
-				rval = luaL_dofile (script->state, script->file);
-			} else {
-				// This case should not happen
-				script = script->next;
-				continue;
-			}
+			if ( capdiss_get_table_item (script->state, "each", LUA_TFUNCTION) == 0 ){
+				lua_pushlstring (script->state, (const char*) pkt_data, pkt_hdr->len);
 
-			if ( rval != 0 ){
-				fprintf (stderr, "%s: script execution failed: %s\n", argv[0], lua_tostring (script->state, -1));
-				exitno = EXIT_FAILURE;
-				goto cleanup;
+				rval = lua_pcall (script->state, 1, 0, 0);
+
+				if ( rval != LUA_OK ){
+					fprintf (stderr, "%s: cannot execute 'each' method: %s\n", argv[0], lua_tostring (script->state, -1));
+					exitno = EXIT_FAILURE;
+					goto cleanup;
+				}
 			}
 
 			script = script->next;
 		}
+	}
+
+	script = script_env.head;
+
+	while ( script != NULL ){
+		if ( capdiss_get_table_item (script->state, "finish", LUA_TFUNCTION) == 0 ){
+			rval = lua_pcall (script->state, 0, 0, 0);
+
+			if ( rval != LUA_OK ){
+				fprintf (stderr, "%s: cannot execute 'finish' method: %s\n", argv[0], lua_tostring (script->state, -1));
+				exitno = EXIT_FAILURE;
+				goto cleanup;
+			}
+		}
+
+		script = script->next;
 	}
 
 cleanup:
