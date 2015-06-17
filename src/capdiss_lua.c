@@ -47,7 +47,7 @@ capdiss_get_table_item (lua_State *lua_state, const char *name, int type)
 
 	// FIXME: add stack size check (lua_checkstack)
 	lua_pushstring (lua_state, name);
-	lua_gettable (lua_state, 1);
+	lua_gettable (lua_state, -2);
 
 	if ( lua_type (lua_state, -1) != type ){
 		lua_remove (lua_state, -2);
