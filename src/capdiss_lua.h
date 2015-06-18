@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015 CodeWard.org
+ * Copyright (c) 2015, CodeWard.org
  */
 #ifndef _CAPDISS_LUA_H
 #define _CAPDISS_LUA_H
