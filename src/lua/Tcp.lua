@@ -1,4 +1,0 @@
-Tcp = {
-	port = nil
-}
-
