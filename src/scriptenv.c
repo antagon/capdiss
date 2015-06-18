@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015 CodeWard.org
+ * Copyright (c) 2015, CodeWard.org
  */
 #include <stdlib.h>
 #include <string.h>

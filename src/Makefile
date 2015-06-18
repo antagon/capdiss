@@ -6,7 +6,7 @@ NAME = capdiss
 
 all: $(NAME)
 
-$(NAME): main.o scriptenv.o capdiss_lua.o
+$(NAME): main.o scriptenv.o capdiss_lua.o pathname.o
 	$(CC) $(CFLAGS) $^ -o $(NAME) -lpcap -llua
 
 main.o: main.c
@@ -16,6 +16,9 @@ scriptenv.o: scriptenv.c
 	$(CC) $(CFLAGS) -c $^
 
 capdiss_lua.o: capdiss_lua.c
+	$(CC) $(CFLAGS) -c $^
+
+pathname.o: pathname.c
 	$(CC) $(CFLAGS) -c $^
 
 install: $(NAME)

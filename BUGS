@@ -1,0 +1,5 @@
+* Code that is placed outside the interface methods (begin, each, finish) is
+* run at the start. In order to have access to global table one must first run
+* the script using either available functions or lua_pcall. At this moment I do
+* not know how to prevent this behaviour.
+

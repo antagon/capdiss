@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015 CodeWard.org
+ * Copyright (c) 2015, CodeWard.org
  */
 #ifndef _SCRIPTENV_H
 #define _SCRIPTENV_H

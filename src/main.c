@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015 CodeWard.org
+ * Copyright (c) 2015, CodeWard.org
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -10,10 +10,16 @@
 #include <lua.h>
 #include <lauxlib.h>
 #include <lualib.h>
+#include <signal.h>
+#include <unistd.h>
 
+#include "pathname.h"
 #include "scriptenv.h"
 #include "capdiss_lua.h"
 #include "capdiss.h"
+
+static int loop;
+static int exitno;
 
 static void
 usage (const char *p)
@@ -32,6 +38,13 @@ version (const char *p)
 	fprintf (stderr, "%s %u.%u.%u, %s\n", p, CAPDISS_VERSION_MAJOR, CAPDISS_VERSION_MINOR, CAPDISS_VERSION_PATCH, LUA_VERSION);
 }
 
+static void
+terminate (int signo)
+{
+	loop = 0;
+	exitno = signo;
+}
+
 int
 main (int argc, char *argv[])
 {
@@ -39,6 +52,7 @@ main (int argc, char *argv[])
 	struct pcap_pkthdr *pkt_hdr;
 	const u_char *pkt_data;
 	char errbuff[PCAP_ERRBUF_SIZE];
+	char cwd[PATH_MAX];
 	struct scriptenv script_env;
 	struct script *script;
 	struct option opt_long[] = {
@@ -48,7 +62,7 @@ main (int argc, char *argv[])
 		{ "version", no_argument, 0, 'v' },
 		{ NULL, 0, 0, 0 }
 	};
-	int rval, exitno, c, opt_index, src_arg_num;
+	int rval, c, opt_index;
 
 	pcap_res = NULL;
 	exitno = EXIT_SUCCESS;
@@ -127,7 +141,11 @@ main (int argc, char *argv[])
 		goto cleanup;
 	}
 
-	src_arg_num = 0;
+	if ( getcwd (cwd, sizeof (cwd)) == NULL ){
+		fprintf (stderr, "%s: cannot obtain current working directory: %s\n", argv[0], strerror (errno));
+		exitno = EXIT_FAILURE;
+		goto cleanup;
+	}
 
 	script = script_env.head;
 
@@ -150,16 +168,36 @@ main (int argc, char *argv[])
 			rval = luaL_dostring (script->state, script->source);
 
 			if ( rval != 0 ){
-				fprintf (stderr, "%s: cannot load Lua script from source argument %d: %s\n", argv[0], ++src_arg_num, lua_tostring (script->state, -1));
+				fprintf (stderr, "%s: %s\n", argv[0], lua_tostring (script->state, -1));
 				exitno = EXIT_FAILURE;
 				goto cleanup;
 			}
 
 		} else if ( script->file != NULL ){
-			rval = luaL_dofile (script->state, script->file);
+			struct pathname path;
+
+			path_split (script->file, &path);
+
+			rval = chdir (path.dir);
+
+			if ( rval == -1 ){
+				fprintf (stderr, "%s: cannot change working directory to '%s': %s\n", argv[0], path.dir, strerror (errno));
+				exitno = EXIT_FAILURE;
+				goto cleanup;
+			}
+
+			rval = luaL_dofile (script->state, path.base);
 
 			if ( rval != 0 ){
-				fprintf (stderr, "%s: cannot load Lua script from file '%s': %s\n", argv[0], script->file, lua_tostring (script->state, -1));
+				fprintf (stderr, "%s: %s\n", argv[0], lua_tostring (script->state, -1));
+				exitno = EXIT_FAILURE;
+				goto cleanup;
+			}
+
+			rval = chdir (cwd);
+
+			if ( rval == -1 ){
+				fprintf (stderr, "%s: cannot change working directory to '%s': %s\n", argv[0], cwd, strerror (errno));
 				exitno = EXIT_FAILURE;
 				goto cleanup;
 			}
@@ -183,7 +221,14 @@ main (int argc, char *argv[])
 		script = script->next;
 	}
 
-	for ( ;; ){
+	// Setup signal handlers
+	signal (SIGINT, terminate);
+	signal (SIGTERM, terminate);
+	signal (SIGQUIT, terminate);
+
+	loop = 1;
+
+	while ( loop ){
 		rval = pcap_next_ex (pcap_res, &pkt_hdr, &pkt_data);
 
 		if ( rval == -1 ){
