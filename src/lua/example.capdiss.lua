@@ -3,7 +3,7 @@
 --
 Capdiss = {}
 
-i = 0
+local i = 0
 
 function Capdiss.begin ()
 	print ("Begin parsing...")
