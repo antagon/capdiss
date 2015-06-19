@@ -245,7 +245,13 @@ main (int argc, char *argv[])
 		while ( script != NULL ){
 
 			if ( capdiss_get_table_item (script->state, "each", LUA_TFUNCTION) == 0 ){
-				// FIXME: add stack size check (lua_checkstack)
+
+				if ( ! lua_checkstack (script->state, 2) ){
+					fprintf (stderr, "%s: Oops, something went wrong, Lua stack is full!\n", argv[0]);
+					exitno = EXIT_FAILURE;
+					goto cleanup;
+				}
+
 				lua_pushnumber (script->state, pkt_hdr->ts.tv_sec);
 				lua_pushlstring (script->state, (const char*) pkt_data, pkt_hdr->len);
 
