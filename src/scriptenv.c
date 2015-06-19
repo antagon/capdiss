@@ -44,12 +44,6 @@ scriptenv_add (struct scriptenv *script_env, struct script *script)
 }
 
 void
-scriptenv_delete (struct scriptenv *script_env, struct script *script)
-{
-	// TODO...
-}
-
-void
 scriptenv_free (struct scriptenv *script_env)
 {
 	struct script *script, *script_next;

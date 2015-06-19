@@ -25,8 +25,6 @@ extern void scriptenv_init (struct scriptenv *script_env);
 
 extern void scriptenv_add (struct scriptenv *script_env, struct script *script);
 
-extern void scriptenv_delete (struct scriptenv *script_env, struct script *script);
-
 extern void scriptenv_free (struct scriptenv *script_env);
 
 extern struct script* script_new (void);
