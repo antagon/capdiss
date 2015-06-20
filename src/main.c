@@ -25,11 +25,12 @@ static void
 usage (const char *p)
 {
 	fprintf (stderr, "Usage: %s <OPTIONS> <FILE>\n\n\
-Options:\n \
- -e, --source='PROGTEXT'  load Lua script source code\n \
- -f, --file=PROGFILE      load Lua script file\n \
- -v, --version            show version information\n \
- -h, --help               show usage information (this text)\n", p);
+Options:\n\
+ -e, --source='PROGTEXT'    load Lua script source code\n\
+ -f, --file=PROGFILE        load Lua script file\n\
+ -t, --filter='FILTERTEXT'  apply packet filter\n\
+ -v, --version              show version information\n\
+ -h, --help                 show usage information (this text)\n", p);
 }
 
 static void
@@ -53,11 +54,13 @@ main (int argc, char *argv[])
 	const u_char *pkt_data;
 	char errbuff[PCAP_ERRBUF_SIZE];
 	char cwd[PATH_MAX];
+	char *bpf;
 	struct scriptenv script_env;
 	struct script *script;
 	struct option opt_long[] = {
 		{ "file", required_argument, 0, 'f' },
 		{ "source", required_argument, 0, 'e' },
+		{ "filter", required_argument, 0, 't' },
 		{ "help", no_argument, 0, 'h' },
 		{ "version", no_argument, 0, 'v' },
 		{ NULL, 0, 0, 0 }
@@ -65,11 +68,12 @@ main (int argc, char *argv[])
 	int rval, c, opt_index;
 
 	pcap_res = NULL;
+	bpf = NULL;
 	exitno = EXIT_SUCCESS;
 
 	scriptenv_init (&script_env);
 
-	while ( (c = getopt_long (argc, argv, "f:e:hv", opt_long, &opt_index)) != -1 ){
+	while ( (c = getopt_long (argc, argv, "f:e:t:hv", opt_long, &opt_index)) != -1 ){
 		switch ( c ){
 			case 'f':
 			case 'e':
@@ -100,6 +104,16 @@ main (int argc, char *argv[])
 				}
 
 				scriptenv_add (&script_env, script);
+				break;
+
+			case 't':
+				bpf = strdup (optarg);
+
+				if ( bpf == NULL ){
+					fprintf (stderr, "%s: cannot allocate memory: %s\n", argv[0], strerror (errno));
+					exitno = EXIT_FAILURE;
+					goto cleanup;
+				}
 				break;
 
 			case 'h':
@@ -139,6 +153,29 @@ main (int argc, char *argv[])
 		fprintf (stderr, "%s: cannot open file '%s': %s\n", argv[0], argv[optind], errbuff);
 		exitno = EXIT_FAILURE;
 		goto cleanup;
+	}
+
+	if ( bpf != NULL ){
+		struct bpf_program bpf_prog;
+
+		rval = pcap_compile (pcap_res, &bpf_prog, bpf, 0, 0);
+
+		if ( rval == -1 ){
+			fprintf (stderr, "%s: cannot compile packet filter program: %s\n", argv[0], pcap_geterr (pcap_res));
+			exitno = EXIT_FAILURE;
+			goto cleanup;
+		}
+
+		rval = pcap_setfilter (pcap_res, &bpf_prog);
+
+		if ( rval == -1 ){
+			fprintf (stderr, "%s: cannot apply packet filter: %s\n", argv[0], pcap_geterr (pcap_res));
+			exitno = EXIT_FAILURE;
+			goto cleanup;
+		}
+
+		pcap_freecode (&bpf_prog);
+		free (bpf);
 	}
 
 	if ( getcwd (cwd, sizeof (cwd)) == NULL ){
@@ -194,6 +231,8 @@ main (int argc, char *argv[])
 				goto cleanup;
 			}
 
+			path_free (&path);
+
 			rval = chdir (cwd);
 
 			if ( rval == -1 ){
@@ -247,7 +286,7 @@ main (int argc, char *argv[])
 			if ( capdiss_get_table_item (script->state, "each", LUA_TFUNCTION) == 0 ){
 
 				if ( ! lua_checkstack (script->state, 2) ){
-					fprintf (stderr, "%s: Oops, something went wrong, Lua stack is full!\n", argv[0]);
+					fprintf (stderr, "%s: oops, something went wrong, Lua stack is full!\n", argv[0]);
 					exitno = EXIT_FAILURE;
 					goto cleanup;
 				}

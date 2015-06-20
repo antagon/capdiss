@@ -1,11 +1,13 @@
 --
--- Simple capdiss script.
+-- Capdiss script counting frames.
 --
 Capdiss = {}
 
-local i = 0
+local i
 
 function Capdiss.begin ()
+	-- Not much to do here, just initialize the counter variable
+	i = 0
 	print ("Begin parsing...")
 end
 
@@ -18,5 +20,4 @@ end
 function Capdiss.finish ()
 	print ("Done parsing ... " .. i .. " packets processed.")
 end
-
 
