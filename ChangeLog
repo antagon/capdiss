@@ -1,10 +1,20 @@
+version 0.2.0
+-------------
+
+* FIX: check stack size before each push. Not doing so leads to stack
+overflows and segmentation faults.
+
+* New option -t that allows to specify a packet filter program to filter out
+irelevant packets on capdiss level.
+
+* FIX: memory leak when loading Lua scripts from file.
+
 version 0.1.0
 -------------
 
 * Initial version release.
 
-* Support for methods: Capdiss.begin (), Capdiss.each (), Capdiss.finish
-().
+* Support for methods: Capdiss.begin (), Capdiss.each (), Capdiss.finish ().
 
 * Load scripts from source (option -e) or from file (option -f).
 
