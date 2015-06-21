@@ -251,7 +251,7 @@ main (int argc, char *argv[])
 			rval = lua_pcall (script->state, 0, 0, 0);
 
 			if ( rval != LUA_OK ){
-				fprintf (stderr, "%s: cannot execute 'begin' method: %s\n", argv[0], lua_tostring (script->state, -1));
+				fprintf (stderr, "%s: %s\n", argv[0], lua_tostring (script->state, -1));
 				exitno = EXIT_FAILURE;
 				goto cleanup;
 			}
@@ -297,7 +297,7 @@ main (int argc, char *argv[])
 				rval = lua_pcall (script->state, 2, 0, 0);
 
 				if ( rval != LUA_OK ){
-					fprintf (stderr, "%s: cannot execute 'each' method: %s\n", argv[0], lua_tostring (script->state, -1));
+					fprintf (stderr, "%s: %s\n", argv[0], lua_tostring (script->state, -1));
 					exitno = EXIT_FAILURE;
 					goto cleanup;
 				}
@@ -314,7 +314,7 @@ main (int argc, char *argv[])
 			rval = lua_pcall (script->state, 0, 0, 0);
 
 			if ( rval != LUA_OK ){
-				fprintf (stderr, "%s: cannot execute 'finish' method: %s\n", argv[0], lua_tostring (script->state, -1));
+				fprintf (stderr, "%s: %s\n", argv[0], lua_tostring (script->state, -1));
 				exitno = EXIT_FAILURE;
 				goto cleanup;
 			}
