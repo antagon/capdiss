@@ -271,7 +271,7 @@ main (int argc, char *argv[])
 		rval = pcap_next_ex (pcap_res, &pkt_hdr, &pkt_data);
 
 		if ( rval == -1 ){
-			fprintf (stderr, "%s: reading a packet from file '%s' failed: %s\n", argv[0], argv[1], pcap_geterr (pcap_res));
+			fprintf (stderr, "%s: reading a packet from file '%s' failed: %s\n", argv[0], argv[optind], pcap_geterr (pcap_res));
 			exitno = EXIT_FAILURE;
 			goto cleanup;
 		} else if ( rval == -2 ){
