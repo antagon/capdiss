@@ -1,13 +1,16 @@
 version 0.2.0
 -------------
 
-* FIX: check stack size before each push. Not doing so leads to stack
-overflows and segmentation faults.
-
 * New option -t that allows to specify a packet filter program to filter out
 irelevant packets on capdiss level.
 
+* FIX: check stack size before each push. Not doing so leads to stack
+overflows and segmentation faults.
+
 * FIX: memory leak when loading Lua scripts from file.
+
+* FIX: execution of Capdiss methods should be skipped or canceled if a
+termination signal was caught prior or during their execution.
 
 version 0.1.0
 -------------

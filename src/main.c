@@ -70,8 +70,12 @@ main (int argc, char *argv[])
 	pcap_res = NULL;
 	bpf = NULL;
 	exitno = EXIT_SUCCESS;
-
 	scriptenv_init (&script_env);
+
+	// Setup signal handlers
+	signal (SIGINT, terminate);
+	signal (SIGTERM, terminate);
+	signal (SIGQUIT, terminate);
 
 	while ( (c = getopt_long (argc, argv, "f:e:t:hv", opt_long, &opt_index)) != -1 ){
 		switch ( c ){
@@ -247,7 +251,7 @@ main (int argc, char *argv[])
 			continue;
 		}
 
-		if ( capdiss_get_table_item (script->state, "begin", LUA_TFUNCTION) == 0 ){
+		if ( (exitno == EXIT_SUCCESS) && (capdiss_get_table_item (script->state, "begin", LUA_TFUNCTION) == 0) ){
 			rval = lua_pcall (script->state, 0, 0, 0);
 
 			if ( rval != LUA_OK ){
@@ -259,11 +263,6 @@ main (int argc, char *argv[])
 
 		script = script->next;
 	}
-
-	// Setup signal handlers
-	signal (SIGINT, terminate);
-	signal (SIGTERM, terminate);
-	signal (SIGQUIT, terminate);
 
 	loop = 1;
 
@@ -283,7 +282,7 @@ main (int argc, char *argv[])
 
 		while ( script != NULL ){
 
-			if ( capdiss_get_table_item (script->state, "each", LUA_TFUNCTION) == 0 ){
+			if ( (exitno == EXIT_SUCCESS) && (capdiss_get_table_item (script->state, "each", LUA_TFUNCTION) == 0) ){
 
 				if ( ! lua_checkstack (script->state, 2) ){
 					fprintf (stderr, "%s: oops, something went wrong, Lua stack is full!\n", argv[0]);
@@ -310,7 +309,7 @@ main (int argc, char *argv[])
 	script = script_env.head;
 
 	while ( script != NULL ){
-		if ( capdiss_get_table_item (script->state, "finish", LUA_TFUNCTION) == 0 ){
+		if ( (exitno == EXIT_SUCCESS) && (capdiss_get_table_item (script->state, "finish", LUA_TFUNCTION) == 0) ){
 			rval = lua_pcall (script->state, 0, 0, 0);
 
 			if ( rval != LUA_OK ){
