@@ -19,6 +19,7 @@ struct script
 	char *file;
 	struct script *prev;
 	struct script *next;
+	int ok;
 };
 
 extern void scriptenv_init (struct scriptenv *script_env);

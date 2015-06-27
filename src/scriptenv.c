@@ -69,6 +69,7 @@ script_new (void)
 		return NULL;
 
 	memset (script, 0, sizeof (struct script));
+	script->ok = 1;
 
 	return script;
 }

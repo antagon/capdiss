@@ -145,7 +145,7 @@ main (int argc, char *argv[])
 	}
 
 	if ( script_env.head == NULL ){
-		fprintf (stderr, "%s: no Lua scripts specified.\n", argv[0]);
+		fprintf (stderr, "%s: no Lua script specified.\n", argv[0]);
 		usage (argv[0]);
 		exitno = EXIT_FAILURE;
 		goto cleanup;
@@ -179,7 +179,7 @@ main (int argc, char *argv[])
 		rval = pcap_setfilter (pcap_res, &bpf_prog);
 
 		if ( rval == -1 ){
-			fprintf (stderr, "%s: cannot apply packet filter: %s\n", argv[0], pcap_geterr (pcap_res));
+			fprintf (stderr, "%s: cannot apply packet filter program: %s\n", argv[0], pcap_geterr (pcap_res));
 			exitno = EXIT_FAILURE;
 			goto cleanup;
 		}
@@ -293,7 +293,8 @@ main (int argc, char *argv[])
 
 		while ( script != NULL ){
 
-			if ( (exitno == EXIT_SUCCESS) && (capdiss_get_table_item (script->state, "each", LUA_TFUNCTION) == 0) ){
+			if ( (exitno == EXIT_SUCCESS) && (script->ok == 1)
+					&& (capdiss_get_table_item (script->state, "each", LUA_TFUNCTION) == 0) ){
 
 				if ( ! lua_checkstack (script->state, 2) ){
 					fprintf (stderr, "%s: oops, something went wrong, Lua stack is full!\n", argv[0]);
@@ -311,6 +312,11 @@ main (int argc, char *argv[])
 					exitno = EXIT_FAILURE;
 					goto cleanup;
 				}
+			} else {
+				// If the method 'each' was not found first time, there is no
+				// reason to look for it again. The name of the field is
+				// somewhat ambigiuous, please change it in future...
+				script->ok = 0;
 			}
 
 			script = script->next;
