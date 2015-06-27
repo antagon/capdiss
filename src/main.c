@@ -293,8 +293,12 @@ main (int argc, char *argv[])
 
 		while ( script != NULL ){
 
-			if ( (exitno == EXIT_SUCCESS) && (script->ok == 1)
-					&& (capdiss_get_table_item (script->state, "each", LUA_TFUNCTION) == 0) ){
+			if ( ! script->ok ){
+				script = script->next;
+				continue;
+			}
+
+			if ( (exitno == EXIT_SUCCESS) && (capdiss_get_table_item (script->state, "each", LUA_TFUNCTION) == 0) ){
 
 				if ( ! lua_checkstack (script->state, 2) ){
 					fprintf (stderr, "%s: oops, something went wrong, Lua stack is full!\n", argv[0]);
@@ -315,7 +319,7 @@ main (int argc, char *argv[])
 			} else {
 				// If the method 'each' was not found first time, there is no
 				// reason to look for it again. The name of the field is
-				// somewhat ambigiuous, please change it in future...
+				// somewhat ambiguous, please change it in future...
 				script->ok = 0;
 			}
 
