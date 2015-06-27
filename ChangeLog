@@ -1,3 +1,8 @@
+version 0.2.1
+-------------
+
+* FIX: when using stdin as a source of data, use sane error messages.
+
 version 0.2.0
 -------------
 

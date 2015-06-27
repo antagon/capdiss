@@ -154,7 +154,13 @@ main (int argc, char *argv[])
 	pcap_res = pcap_open_offline (argv[optind], errbuff);
 
 	if ( pcap_res == NULL ){
-		fprintf (stderr, "%s: cannot open file '%s': %s\n", argv[0], argv[optind], errbuff);
+
+		// Are we reading from a standard input?
+		if ( argv[optind][0] == '-' )
+			fprintf (stderr, "%s: cannot interpret input data: %s\n", argv[0], errbuff);
+		else
+			fprintf (stderr, "%s: cannot open file '%s': %s\n", argv[0], argv[optind], errbuff);
+
 		exitno = EXIT_FAILURE;
 		goto cleanup;
 	}
@@ -270,7 +276,12 @@ main (int argc, char *argv[])
 		rval = pcap_next_ex (pcap_res, &pkt_hdr, &pkt_data);
 
 		if ( rval == -1 ){
-			fprintf (stderr, "%s: reading a packet from file '%s' failed: %s\n", argv[0], argv[optind], pcap_geterr (pcap_res));
+			// Are we reading from a standard input?
+			if ( argv[optind][0] == '-' )
+				fprintf (stderr, "%s: reading a frame from input data failed: %s\n", argv[0], pcap_geterr (pcap_res));
+			else
+				fprintf (stderr, "%s: reading a frame from file '%s' failed: %s\n", argv[0], argv[optind], pcap_geterr (pcap_res));
+
 			exitno = EXIT_FAILURE;
 			goto cleanup;
 		} else if ( rval == -2 ){
