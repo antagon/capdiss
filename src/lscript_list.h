@@ -5,6 +5,8 @@
 #define _LSCRIPT_LIST_H
 
 #include <lua.h>
+#include <lauxlib.h>
+#include <lualib.h>
 
 #define CAPDISS_TABLE "capdiss"
 
@@ -30,6 +32,8 @@ struct lscript
 	struct lscript *next;
 };
 
+#define lscript_strerror(script) lua_tostring ((script)->state, -1)
+
 extern void lscript_list_init (struct lscript_list *script_list);
 
 extern void lscript_list_add (struct lscript_list *script_list, struct lscript *script);
@@ -37,6 +41,8 @@ extern void lscript_list_add (struct lscript_list *script_list, struct lscript *
 extern void lscript_list_free (struct lscript_list *script_list);
 
 extern struct lscript* lscript_new (const char *payload, int type);
+
+extern int lscript_do_payload (struct lscript *script);
 
 extern void lscript_reset (struct lscript *script);
 

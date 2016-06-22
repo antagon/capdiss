@@ -9,6 +9,19 @@
 
 #include "lscript_list.h"
 
+static int
+lua_get_table (lua_State *lua_state, const char *name)
+{
+	lua_getglobal (lua_state, name);
+
+	if ( ! lua_istable (lua_state, -1) ){
+		lua_pop (lua_state, 1);
+		return 1;
+	}
+
+	return 0;
+}
+
 static void
 lscript_free (struct lscript *script)
 {
@@ -39,12 +52,25 @@ lscript_new (const char *payload, int type)
 	script->type = type;
 
 	script->state = luaL_newstate ();
-	// TODO: customize which libraries to load.
 	luaL_openlibs (script->state);
 
 	script->ok = 1;
 
 	return script;
+}
+
+int
+lscript_do_payload (struct lscript *script)
+{
+	if ( script->type == LSCRIPT_SRC ){
+		if ( luaL_dostring (script->state, script->payload) != 0 )
+			return 1;
+	} else if ( script->type == LSCRIPT_PATH ){
+		if ( luaL_dofile (script->state, script->payload) != 0 )
+			return 1;
+	}
+
+	return 0;
 }
 
 void
@@ -57,23 +83,10 @@ lscript_reset (struct lscript *script)
 	luaL_openlibs (script->state);
 }
 
-static int
-lua_get_global_table (lua_State *lua_state, const char *name)
-{
-	lua_getglobal (lua_state, name);
-
-	if ( ! lua_istable (lua_state, -1) ){
-		lua_pop (lua_state, 1);
-		return 1;
-	}
-
-	return 0;
-}
-
 int
 lscript_get_table_item (struct lscript *script, const char *name, int type)
 {
-	if ( lua_get_global_table (script->state, CAPDISS_TABLE) == 1 )
+	if ( lua_get_table (script->state, CAPDISS_TABLE) == 1 )
 		return 1;
 
 	if ( ! lua_checkstack (script->state, 1) )

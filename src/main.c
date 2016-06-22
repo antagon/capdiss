@@ -29,7 +29,7 @@ Options:\n\
  -f, --file=PROGFILE        load Lua script file\n\
  -t, --filter='FILTERTEXT'  apply packet filter\n\
  -v, --version              show version information\n\
- -h, --help                 show usage information (this text)\n", p);
+ -h, --help                 show usage information\n", p);
 }
 
 static void
@@ -66,6 +66,7 @@ main (int argc, char *argv[])
 	};
 	int rval, c, opt_index;
 
+	loop = 1;
 	pcap_res = NULL;
 	bpf = NULL;
 	exitno = EXIT_SUCCESS;
@@ -185,48 +186,8 @@ main (int argc, char *argv[])
 		//
 		for ( script = script_list.head; script != NULL; script = script->next ){
 
-			if ( script->type == LSCRIPT_SRC ){
-				rval = luaL_dostring (script->state, script->payload);
-
-				if ( rval != 0 ){
-					fprintf (stderr, "%s: %s\n", argv[0], lua_tostring (script->state, -1));
-					exitno = EXIT_FAILURE;
-					goto cleanup;
-				}
-
-			} else if ( script->type == LSCRIPT_PATH ){
-				struct pathname path;
-
-				path_split (script->payload, &path);
-
-				rval = chdir (path.dir);
-
-				if ( rval == -1 ){
-					fprintf (stderr, "%s: cannot change working directory to '%s': %s\n", argv[0], path.dir, strerror (errno));
-					exitno = EXIT_FAILURE;
-					goto cleanup;
-				}
-
-				rval = luaL_dofile (script->state, path.base);
-
-				if ( rval != 0 ){
-					fprintf (stderr, "%s: %s\n", argv[0], lua_tostring (script->state, -1));
-					exitno = EXIT_FAILURE;
-					goto cleanup;
-				}
-
-				path_free (&path);
-
-				rval = chdir (cwd);
-
-				if ( rval == -1 ){
-					fprintf (stderr, "%s: cannot change working directory to '%s': %s\n", argv[0], cwd, strerror (errno));
-					exitno = EXIT_FAILURE;
-					goto cleanup;
-				}
-
-			} else {
-				fprintf (stderr, "%s: undefined script type (0x%08x)!!!\n", argv[0], script->type);
+			if ( lscript_do_payload (script) != 0 ){
+				fprintf (stderr, "%s: %s\n", argv[0], lscript_strerror (script));
 				exitno = EXIT_FAILURE;
 				goto cleanup;
 			}
@@ -250,8 +211,6 @@ main (int argc, char *argv[])
 				}
 			}
 		}
-
-		loop = 1;
 
 		while ( loop ){
 			rval = pcap_next_ex (pcap_res, &pkt_hdr, &pkt_data);
