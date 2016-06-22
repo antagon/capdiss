@@ -1,23 +1,22 @@
 --
 -- Capdiss script counting frames.
 --
-Capdiss = {}
+capdiss = {}
 
 local i
 
-function Capdiss.begin ()
+function capdiss.begin (filename, link_type)
 	-- Not much to do here, just initialize the counter variable
 	i = 0
-	print ("Begin parsing...")
+	io.write (string.format ("Begin parsing '%s'...\n", filename))
 end
 
-function Capdiss.each (ts, frame)
+function capdiss.each (ts, frame)
 	i = i + 1
-
-	print (ts .. " :: pkt no. " .. i)
+	io.write (string.format ("%s :: pkt no. %d\n", os.date ("%Y-%m-%d %H:%M:%S", ts), i))
 end
 
-function Capdiss.finish ()
-	print ("Done parsing ... " .. i .. " packets processed.")
+function capdiss.finish ()
+	io.write (string.format ("Done parsing ... %d\n", i))
 end
 

@@ -44,7 +44,7 @@ capdiss_get_table_item (lua_State *lua_state, const char *name, int type)
 {
 	int rval;
 
-	rval = capdiss_get_table (lua_state, "Capdiss");
+	rval = capdiss_get_table (lua_state, "capdiss");
 
 	if ( rval == 1 )
 		return 1;
