@@ -35,7 +35,7 @@ Options:\n\
 static void
 capdiss_version (const char *p)
 {
-	fprintf (stderr, "%s %u.%u.%u, %s\n", p, CAPDISS_VERSION_MAJOR, CAPDISS_VERSION_MINOR, CAPDISS_VERSION_PATCH, LUA_VERSION);
+	fprintf (stderr, "%s %u.%u.%u\n%s\n%s\n", p, CAPDISS_VERSION_MAJOR, CAPDISS_VERSION_MINOR, CAPDISS_VERSION_PATCH, pcap_lib_version (), LUA_VERSION);
 }
 
 static void
