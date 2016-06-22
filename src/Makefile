@@ -1,6 +1,7 @@
 CFLAGS = -O2 -pedantic -ggdb -Wall
 LDFLAGS = -lpcap -llua
 
+INSTALL_PATH = /usr/local/bin
 TARGET = capdiss
 
 .DUMMY: clean install
@@ -19,8 +20,11 @@ lscript_list.o: lscript_list.c
 pathname.o: pathname.c
 	$(CC) $(CFLAGS) -c $^
 
-install: $(TARGET)
-	install --mode 0755 $(TARGET) /usr/local/bin
+install:
+	install --mode 0755 $(TARGET) $(INSTALL_PATH)
+
+uninstall:
+	rm -f $(INSTALL_PATH)/$(TARGET)
 
 clean:
 	rm -f $(TARGET) *.o
