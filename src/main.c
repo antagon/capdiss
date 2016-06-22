@@ -52,8 +52,8 @@ main (int argc, char *argv[])
 	struct pcap_pkthdr *pkt_hdr;
 	const u_char *pkt_data;
 	char errbuff[PCAP_ERRBUF_SIZE];
-	char cwd[PATH_MAX];
 	char *bpf;
+	const char *linktype;
 	struct lscript_list script_list;
 	struct lscript *script;
 	struct option opt_long[] = {
@@ -64,12 +64,15 @@ main (int argc, char *argv[])
 		{ "version", no_argument, 0, 'v' },
 		{ NULL, 0, 0, 0 }
 	};
-	int rval, c, opt_index;
+	int rval, c, opt_index, linktype_len;
 
 	loop = 1;
-	pcap_res = NULL;
 	bpf = NULL;
+	pcap_res = NULL;
+	linktype = NULL;
+	linktype_len = 0;
 	exitno = EXIT_SUCCESS;
+
 	lscript_list_init (&script_list);
 
 	// Setup signal handlers
@@ -133,12 +136,6 @@ main (int argc, char *argv[])
 		goto cleanup;
 	}
 
-	if ( getcwd (cwd, sizeof (cwd)) == NULL ){
-		fprintf (stderr, "%s: cannot obtain current working directory: %s\n", argv[0], strerror (errno));
-		exitno = EXIT_FAILURE;
-		goto cleanup;
-	}
-
 	//
 	// Loop through available pcap files
 	//
@@ -181,6 +178,11 @@ main (int argc, char *argv[])
 			free (bpf);
 		}
 
+		linktype = pcap_datalink_val_to_name (pcap_datalink (pcap_res));
+
+		if ( linktype != NULL )
+			linktype_len = strlen (linktype);
+
 		//
 		// Load Lua scripts
 		//
@@ -194,15 +196,16 @@ main (int argc, char *argv[])
 
 			if ( (exitno == EXIT_SUCCESS) && (lscript_get_table_item (script, "begin", LUA_TFUNCTION) == 0) ){
 
-				if ( ! lua_checkstack (script->state, 1) ){
+				if ( ! lua_checkstack (script->state, 2) ){
 					fprintf (stderr, "%s: oops, something went wrong, Lua stack is full!\n", argv[0]);
 					exitno = EXIT_FAILURE;
 					goto cleanup;
 				}
 
 				lua_pushlstring (script->state, (const char*) argv[optind], strlen (argv[optind]));
+				lua_pushlstring (script->state, linktype, linktype_len);
 
-				rval = lua_pcall (script->state, 1, 0, 0);
+				rval = lua_pcall (script->state, 2, 0, 0);
 
 				if ( rval != LUA_OK ){
 					fprintf (stderr, "%s: %s\n", argv[0], lua_tostring (script->state, -1));
