@@ -1,13 +1,14 @@
-CC = gcc
-CFLAGS = -O2 -ggdb -Wall
-NAME = capdiss
+CFLAGS = -O2 -pedantic -ggdb -Wall
+LDFLAGS = -lpcap -llua
+
+TARGET = capdiss
 
 .DUMMY: clean install
 
-all: $(NAME)
+all: $(TARGET)
 
-$(NAME): main.o lscript_list.o pathname.o
-	$(CC) $(CFLAGS) $^ -o $(NAME) -lpcap -llua
+$(TARGET): main.o lscript_list.o pathname.o
+	$(CC) $(CFLAGS) $^ -o $(TARGET) $(LDFLAGS)
 
 main.o: main.c
 	$(CC) $(CFLAGS) -c $^
@@ -18,9 +19,9 @@ lscript_list.o: lscript_list.c
 pathname.o: pathname.c
 	$(CC) $(CFLAGS) -c $^
 
-install: $(NAME)
-	install --mode 0755 $(NAME) /usr/local/bin
+install: $(TARGET)
+	install --mode 0755 $(TARGET) /usr/local/bin
 
 clean:
-	rm -f $(NAME) *.o
+	rm -f $(TARGET) *.o
 
