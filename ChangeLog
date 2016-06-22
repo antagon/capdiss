@@ -1,3 +1,10 @@
+version 0.3.0
+-------------
+
+* Make capdiss table identificator lower-case ('Capdiss' => 'capdiss')
+
+* Accept multiple pcap files from the command line.
+
 version 0.2.1
 -------------
 
