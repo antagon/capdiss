@@ -13,10 +13,9 @@
 #include <signal.h>
 #include <unistd.h>
 
+#include "capdiss.h"
 #include "pathname.h"
 #include "lscript_list.h"
-#include "capdiss_lua.h"
-#include "capdiss.h"
 
 static int loop;
 static int exitno;
@@ -232,7 +231,7 @@ main (int argc, char *argv[])
 				goto cleanup;
 			}
 
-			if ( (exitno == EXIT_SUCCESS) && (capdiss_get_table_item (script->state, "begin", LUA_TFUNCTION) == 0) ){
+			if ( (exitno == EXIT_SUCCESS) && (lscript_get_table_item (script, "begin", LUA_TFUNCTION) == 0) ){
 
 				if ( ! lua_checkstack (script->state, 1) ){
 					fprintf (stderr, "%s: oops, something went wrong, Lua stack is full!\n", argv[0]);
@@ -276,7 +275,7 @@ main (int argc, char *argv[])
 				if ( ! script->ok )
 					continue;
 
-				if ( (exitno == EXIT_SUCCESS) && (capdiss_get_table_item (script->state, "each", LUA_TFUNCTION) == 0) ){
+				if ( (exitno == EXIT_SUCCESS) && (lscript_get_table_item (script, "each", LUA_TFUNCTION) == 0) ){
 
 					if ( ! lua_checkstack (script->state, 2) ){
 						fprintf (stderr, "%s: oops, something went wrong, Lua stack is full!\n", argv[0]);
@@ -304,7 +303,7 @@ main (int argc, char *argv[])
 		}
 
 		for ( script = script_list.head; script != NULL; script = script->next ){
-			if ( (exitno == EXIT_SUCCESS) && (capdiss_get_table_item (script->state, "finish", LUA_TFUNCTION) == 0) ){
+			if ( (exitno == EXIT_SUCCESS) && (lscript_get_table_item (script, "finish", LUA_TFUNCTION) == 0) ){
 				rval = lua_pcall (script->state, 0, 0, 0);
 
 				if ( rval != LUA_OK ){

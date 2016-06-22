@@ -57,6 +57,41 @@ lscript_reset (struct lscript *script)
 	luaL_openlibs (script->state);
 }
 
+static int
+lua_get_global_table (lua_State *lua_state, const char *name)
+{
+	lua_getglobal (lua_state, name);
+
+	if ( ! lua_istable (lua_state, -1) ){
+		lua_pop (lua_state, 1);
+		return 1;
+	}
+
+	return 0;
+}
+
+int
+lscript_get_table_item (struct lscript *script, const char *name, int type)
+{
+	if ( lua_get_global_table (script->state, CAPDISS_TABLE) == 1 )
+		return 1;
+
+	if ( ! lua_checkstack (script->state, 1) )
+		return 1;
+
+	lua_pushstring (script->state, name);
+	lua_gettable (script->state, -2);
+
+	if ( lua_type (script->state, -1) != type ){
+		lua_pop (script->state, 2);
+		return 1;
+	}
+
+	lua_remove (script->state, -2);
+
+	return 0;
+}
+
 void
 lscript_list_init (struct lscript_list *script_env)
 {

@@ -1,10 +1,12 @@
 /*
  * Copyright (c) 2015, CodeWard.org
  */
-#ifndef _SCRIPTENV_H
-#define _SCRIPTENV_H
+#ifndef _LSCRIPT_LIST_H
+#define _LSCRIPT_LIST_H
 
 #include <lua.h>
+
+#define CAPDISS_TABLE "capdiss"
 
 enum
 {
@@ -37,6 +39,10 @@ extern void lscript_list_free (struct lscript_list *script_list);
 extern struct lscript* lscript_new (const char *payload, int type);
 
 extern void lscript_reset (struct lscript *script);
+
+extern int lscript_get_table_item (struct lscript *script, const char *name, int type);
+
+extern int lscript_set_table_item (struct lscript *script, const char *name, int type, void *val);
 
 #endif
 

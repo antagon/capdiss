@@ -6,16 +6,13 @@ NAME = capdiss
 
 all: $(NAME)
 
-$(NAME): main.o lscript_list.o capdiss_lua.o pathname.o
+$(NAME): main.o lscript_list.o pathname.o
 	$(CC) $(CFLAGS) $^ -o $(NAME) -lpcap -llua
 
 main.o: main.c
 	$(CC) $(CFLAGS) -c $^
 
 lscript_list.o: lscript_list.c
-	$(CC) $(CFLAGS) -c $^
-
-capdiss_lua.o: capdiss_lua.c
 	$(CC) $(CFLAGS) -c $^
 
 pathname.o: pathname.c
