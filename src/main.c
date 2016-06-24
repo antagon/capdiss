@@ -147,7 +147,7 @@ main (int argc, char *argv[])
 		if ( pcap_res == NULL ){
 
 			// Are we reading from a standard input?
-			if ( argv[optind][0] == '-' )
+			if ( argv[optind][0] == '-' && argv[optind][1] == '\0' )
 				fprintf (stderr, "%s: cannot interpret input data: %s\n", argv[0], errbuff);
 			else
 				fprintf (stderr, "%s: cannot open file '%s': %s\n", argv[0], argv[optind], errbuff);
