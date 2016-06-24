@@ -52,6 +52,7 @@ main (int argc, char *argv[])
 	struct pcap_pkthdr *pkt_hdr;
 	const u_char *pkt_data;
 	char errbuff[PCAP_ERRBUF_SIZE];
+	unsigned long int pkt_cnt;
 	char *bpf;
 	const char *linktype;
 	struct lscript_list script_list;
@@ -74,11 +75,6 @@ main (int argc, char *argv[])
 	exitno = EXIT_SUCCESS;
 
 	lscript_list_init (&script_list);
-
-	// Setup signal handlers
-	signal (SIGINT, capdiss_terminate);
-	signal (SIGTERM, capdiss_terminate);
-	signal (SIGQUIT, capdiss_terminate);
 
 	while ( (c = getopt_long (argc, argv, "f:e:t:hv", opt_long, &opt_index)) != -1 ){
 		switch ( c ){
@@ -136,10 +132,16 @@ main (int argc, char *argv[])
 		goto cleanup;
 	}
 
+	// Setup signal handlers
+	signal (SIGINT, capdiss_terminate);
+	signal (SIGTERM, capdiss_terminate);
+	signal (SIGQUIT, capdiss_terminate);
+
 	//
 	// Loop through available pcap files
 	//
 	for ( ; optind < argc; optind++ ){
+		pkt_cnt = 0;
 		pcap_res = pcap_open_offline (argv[optind], errbuff);
 
 		if ( pcap_res == NULL ){
@@ -232,6 +234,8 @@ main (int argc, char *argv[])
 				break;
 			}
 
+			pkt_cnt++;
+
 			for ( script = script_list.head; script != NULL; script = script->next ){
 
 				if ( ! script->ok )
@@ -239,16 +243,17 @@ main (int argc, char *argv[])
 
 				if ( (exitno == EXIT_SUCCESS) && (lscript_get_table_item (script, "each", LUA_TFUNCTION) == 0) ){
 
-					if ( ! lua_checkstack (script->state, 2) ){
+					if ( ! lua_checkstack (script->state, 3) ){
 						fprintf (stderr, "%s: oops, something went wrong, Lua stack is full!\n", argv[0]);
 						exitno = EXIT_FAILURE;
 						goto cleanup;
 					}
 
-					lua_pushnumber (script->state, pkt_hdr->ts.tv_sec);
 					lua_pushlstring (script->state, (const char*) pkt_data, pkt_hdr->len);
+					lua_pushnumber (script->state, pkt_hdr->ts.tv_sec);
+					lua_pushnumber (script->state, pkt_cnt);
 
-					rval = lua_pcall (script->state, 2, 0, 0);
+					rval = lua_pcall (script->state, 3, 0, 0);
 
 					if ( rval != LUA_OK ){
 						fprintf (stderr, "%s: %s\n", argv[0], lua_tostring (script->state, -1));

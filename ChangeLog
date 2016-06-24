@@ -1,9 +1,14 @@
 version 0.3.0
 -------------
 
-* Make capdiss table identificator lower-case ('Capdiss' => 'capdiss')
+* Capdiss table identificator is now lower-case ('Capdiss' => 'capdiss').
 
-* Accept multiple pcap files from the command line.
+* Accept and process multiple pcap files specified on the command line.
+
+* Pass filename and link-type as parameters to the method 'capdiss.begin'.
+
+* Change parameters of method 'capdiss.each'. Pass frame data as a first
+parameter followed by a timestamp and at last frame's number.
 
 version 0.2.1
 -------------
