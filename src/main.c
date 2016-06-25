@@ -142,7 +142,7 @@ main (int argc, char *argv[])
 	//
 	for ( ; optind < argc; optind++ ){
 		pkt_cnt = 0;
-		pcap_res = pcap_open_offline (argv[optind], errbuff);
+		pcap_res = pcap_open_offline_with_tstamp_precision (argv[optind], PCAP_TSTAMP_PRECISION_MICRO, errbuff);
 
 		if ( pcap_res == NULL ){
 
@@ -250,7 +250,7 @@ main (int argc, char *argv[])
 					}
 
 					lua_pushlstring (script->state, (const char*) pkt_data, pkt_hdr->len);
-					lua_pushnumber (script->state, pkt_hdr->ts.tv_sec);
+					lua_pushnumber (script->state, pkt_hdr->ts.tv_sec + pkt_hdr->ts.tv_usec);
 					lua_pushnumber (script->state, pkt_cnt);
 
 					rval = lua_pcall (script->state, 3, 0, 0);
