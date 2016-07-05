@@ -46,15 +46,16 @@ lscript_new (const char *payload, int type)
 
 	script->payload = strdup (payload);
 
-	if ( script->payload == NULL )
+	if ( script->payload == NULL ){
+		free (script);
 		return NULL;
+	}
 
 	script->type = type;
+	script->ok = 1;
 
 	script->state = luaL_newstate ();
 	luaL_openlibs (script->state);
-
-	script->ok = 1;
 
 	return script;
 }
@@ -101,6 +102,38 @@ lscript_get_table_item (struct lscript *script, const char *name, int type)
 	}
 
 	lua_remove (script->state, -2);
+
+	return 0;
+}
+
+int
+lscript_set_table_item (struct lscript *script, const char *name, int type, void *val)
+{
+	if ( lua_get_table (script->state, CAPDISS_TABLE) == 1 )
+		return 1;
+
+	switch ( type ){
+		case LUA_TNIL:
+			lua_pushnil (script->state);
+			break;
+
+		case LUA_TBOOLEAN:
+			lua_pushboolean (script->state, (int) *((int*) val));
+			break;
+
+		case LUA_TNUMBER:
+			lua_pushnumber (script->state, (lua_Number) *((lua_Number*) val));
+			break;
+
+		case LUA_TSTRING:
+			lua_pushstring (script->state, (const char*) val);
+			break;
+
+		default:
+			return 1;
+	}
+
+	lua_setfield (script->state, -2, name);
 
 	return 0;
 }
