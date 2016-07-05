@@ -9,6 +9,23 @@
 
 #include "lscript_list.h"
 
+#if 0
+#include <stdio.h>
+
+static void
+lua_dump_stack (lua_State *lua_state, const char *label)
+{
+	int top, i, type;
+	top = lua_gettop (lua_state);
+	fprintf (stderr, ">>%s\n", label);
+	for ( i = top; i >= 1; i-- ){
+		type = lua_type (lua_state, i);
+		fprintf (stderr, "[%d] => %s\n", i, lua_typename (lua_state, type));
+	}
+	fprintf (stderr, "<<END %s\n", label);
+}
+#endif
+
 static int
 lua_get_table (lua_State *lua_state, const char *name)
 {
@@ -18,6 +35,47 @@ lua_get_table (lua_State *lua_state, const char *name)
 		lua_pop (lua_state, 1);
 		return 1;
 	}
+
+	return 0;
+}
+
+static int
+lua_load_file (lua_State *lua_state, const char *name)
+{
+	if ( luaL_loadfile (lua_state, name) != LUA_OK )
+		return 1;
+
+	if ( lua_pcall (lua_state, 0, 1, 0) != LUA_OK )
+		return 1;
+
+	if ( lua_istable (lua_state, -1) )
+		lua_setglobal (lua_state, "capdiss");
+
+	return 0;
+}
+
+static int
+lua_load_module (lua_State *lua_state, const char *name)
+{
+	lua_getglobal (lua_state, "require");
+
+	if ( ! lua_isfunction (lua_state, -1) ){
+		lua_pop (lua_state, 1);
+		return 1;
+	}
+
+	if ( ! lua_checkstack (lua_state, 1) ){
+		lua_pop (lua_state, 1);
+		return 1;
+	}
+
+	lua_pushstring (lua_state, name);
+
+	if ( lua_pcall (lua_state, 1, 1, 0) != LUA_OK )
+		return 1;
+
+	if ( lua_istable (lua_state, -1) )
+		lua_setglobal (lua_state, "capdiss");
 
 	return 0;
 }
@@ -55,6 +113,8 @@ lscript_new (const char *payload, int type)
 	script->ok = 1;
 
 	script->state = luaL_newstate ();
+
+	// FIXME: load only neccessary libraries!
 	luaL_openlibs (script->state);
 
 	return script;
@@ -63,15 +123,26 @@ lscript_new (const char *payload, int type)
 int
 lscript_do_payload (struct lscript *script)
 {
-	if ( script->type == LSCRIPT_SRC ){
-		if ( luaL_dostring (script->state, script->payload) != 0 )
-			return 1;
-	} else if ( script->type == LSCRIPT_PATH ){
-		if ( luaL_dofile (script->state, script->payload) != 0 )
+	int rval;
+
+	switch ( script->type ){
+		case LSCRIPT_SRC:
+			rval = luaL_dostring (script->state, script->payload);
+			break;
+
+		case LSCRIPT_FILE:
+			rval = lua_load_file (script->state, script->payload);
+			break;
+
+		case LSCRIPT_MOD:
+			rval = lua_load_module (script->state, script->payload);
+			break;
+
+		default:
 			return 1;
 	}
 
-	return 0;
+	return rval;
 }
 
 void

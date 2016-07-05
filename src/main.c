@@ -11,6 +11,7 @@
 #include <lauxlib.h>
 #include <lualib.h>
 #include <signal.h>
+#include <sys/stat.h>
 #include <unistd.h>
 
 #include "capdiss.h"
@@ -49,6 +50,7 @@ int
 main (int argc, char *argv[])
 {
 	pcap_t *pcap_res;
+	struct stat ifstatus;
 	struct pcap_pkthdr *pkt_hdr;
 	const u_char *pkt_data;
 	char errbuff[PCAP_ERRBUF_SIZE];
@@ -73,16 +75,33 @@ main (int argc, char *argv[])
 	linktype = NULL;
 	exitno = EXIT_SUCCESS;
 
+	memset (&ifstatus, 0, sizeof (struct stat));
+
 	lscript_list_init (&script_list);
 
 	while ( (c = getopt_long (argc, argv, "r:s:F:hv", opt_long, &opt_index)) != -1 ){
 		switch ( c ){
 			case 'r':
 			case 's':
-				if ( c == 'r' )
-					script = lscript_new (optarg, LSCRIPT_PATH);
-				else
+				if ( c == 'r' ){
+					errno = 0;
+					rval = stat (optarg, &ifstatus);
+
+					if ( rval == -1 && errno != ENOENT ){
+						fprintf (stderr, "%s: cannot stat input file '%s': %s\n", argv[0], optarg, strerror (errno));
+						exitno = EXIT_FAILURE;
+						goto cleanup;
+					}
+
+					// If stat on a file failed, try to load it as a module using 'require'.
+					if ( errno != 0 ){
+						script = lscript_new (optarg, LSCRIPT_MOD);
+					} else {
+						script = lscript_new (optarg, LSCRIPT_FILE);
+					}
+				} else {
 					script = lscript_new (optarg, LSCRIPT_SRC);
+				}
 
 				if ( script == NULL ){
 					fprintf (stderr, "%s: cannot allocate memory: %s\n", argv[0], strerror (errno));
@@ -149,7 +168,7 @@ main (int argc, char *argv[])
 			if ( argv[optind][0] == '-' && argv[optind][1] == '\0' )
 				fprintf (stderr, "%s: cannot interpret input data: %s\n", argv[0], errbuff);
 			else
-				fprintf (stderr, "%s: cannot open file '%s': %s\n", argv[0], argv[optind], errbuff);
+				fprintf (stderr, "%s: cannot open file %s\n", argv[0], errbuff);
 
 			exitno = EXIT_FAILURE;
 			goto cleanup;

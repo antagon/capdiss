@@ -13,7 +13,8 @@
 enum
 {
 	LSCRIPT_SRC = 1,
-	LSCRIPT_PATH = 2
+	LSCRIPT_FILE = 2,
+	LSCRIPT_MOD = 3
 };
 
 struct lscript_list
