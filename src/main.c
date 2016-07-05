@@ -23,11 +23,11 @@ static int exitno;
 static void
 capdiss_usage (const char *p)
 {
-	fprintf (stderr, "Usage: %s <OPTIONS> <pcap-file> ...\n\n\
+	fprintf (stderr, "Usage: %s <options> <pcap-file> ...\n\n\
 Options:\n\
- -e, --source='PROGTEXT'    load Lua script source code\n\
- -f, --file=PROGFILE        load Lua script file\n\
- -t, --filter='FILTERTEXT'  apply packet filter\n\
+ -r, --run <file>           run Lua script from file\n\
+ -s, --run-source <code>    run Lua source code\n\
+ -F, --filter <filter>      apply packet filter\n\
  -v, --version              show version information\n\
  -h, --help                 show usage information\n", p);
 }
@@ -58,9 +58,9 @@ main (int argc, char *argv[])
 	struct lscript_list script_list;
 	struct lscript *script;
 	struct option opt_long[] = {
-		{ "file", required_argument, 0, 'f' },
-		{ "source", required_argument, 0, 'e' },
-		{ "filter", required_argument, 0, 't' },
+		{ "run", required_argument, 0, 'r' },
+		{ "run-source", required_argument, 0, 's' },
+		{ "filter", required_argument, 0, 'F' },
 		{ "help", no_argument, 0, 'h' },
 		{ "version", no_argument, 0, 'v' },
 		{ NULL, 0, 0, 0 }
@@ -76,11 +76,11 @@ main (int argc, char *argv[])
 
 	lscript_list_init (&script_list);
 
-	while ( (c = getopt_long (argc, argv, "f:e:t:hv", opt_long, &opt_index)) != -1 ){
+	while ( (c = getopt_long (argc, argv, "r:s:F:hv", opt_long, &opt_index)) != -1 ){
 		switch ( c ){
-			case 'f':
-			case 'e':
-				if ( c == 'f' )
+			case 'r':
+			case 's':
+				if ( c == 'r' )
 					script = lscript_new (optarg, LSCRIPT_PATH);
 				else
 					script = lscript_new (optarg, LSCRIPT_SRC);
@@ -94,7 +94,7 @@ main (int argc, char *argv[])
 				lscript_list_add (&script_list, script);
 				break;
 
-			case 't':
+			case 'F':
 				bpf = strdup (optarg);
 
 				if ( bpf == NULL ){
@@ -156,10 +156,17 @@ main (int argc, char *argv[])
 			goto cleanup;
 		}
 
+		// Get pcap file data link value and convert it to string.
+		// This string is passed to Lua function 'begin'.
+		linktype = pcap_datalink_val_to_name (pcap_datalink (pcap_res));
+
+		if ( linktype != NULL )
+			linktype_len = strlen (linktype);
+
 		if ( bpf != NULL ){
 			struct bpf_program bpf_prog;
 
-			rval = pcap_compile (pcap_res, &bpf_prog, bpf, 0, 0);
+			rval = pcap_compile (pcap_res, &bpf_prog, bpf, 1, PCAP_NETMASK_UNKNOWN);
 
 			if ( rval == -1 ){
 				fprintf (stderr, "%s: cannot compile packet filter program: %s\n", argv[0], pcap_geterr (pcap_res));
@@ -178,12 +185,8 @@ main (int argc, char *argv[])
 
 			pcap_freecode (&bpf_prog);
 			free (bpf);
+			bpf = NULL;
 		}
-
-		linktype = pcap_datalink_val_to_name (pcap_datalink (pcap_res));
-
-		if ( linktype != NULL )
-			linktype_len = strlen (linktype);
 
 		//
 		// Load Lua scripts
@@ -286,6 +289,9 @@ main (int argc, char *argv[])
 	}
 
 cleanup:
+	if ( bpf != NULL )
+		free (bpf);
+
 	if ( pcap_res != NULL )
 		pcap_close (pcap_res);
 
