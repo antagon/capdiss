@@ -65,13 +65,12 @@ main (int argc, char *argv[])
 		{ "version", no_argument, 0, 'v' },
 		{ NULL, 0, 0, 0 }
 	};
-	int rval, c, opt_index, linktype_len;
+	int rval, c, opt_index;
 
 	loop = 1;
 	bpf = NULL;
 	pcap_res = NULL;
 	linktype = NULL;
-	linktype_len = 0;
 	exitno = EXIT_SUCCESS;
 
 	lscript_list_init (&script_list);
@@ -160,9 +159,6 @@ main (int argc, char *argv[])
 		// This string is passed to Lua function 'begin'.
 		linktype = pcap_datalink_val_to_name (pcap_datalink (pcap_res));
 
-		if ( linktype != NULL )
-			linktype_len = strlen (linktype);
-
 		if ( bpf != NULL ){
 			struct bpf_program bpf_prog;
 
@@ -207,8 +203,8 @@ main (int argc, char *argv[])
 					goto cleanup;
 				}
 
-				lua_pushlstring (script->state, (const char*) argv[optind], strlen (argv[optind]));
-				lua_pushlstring (script->state, linktype, linktype_len);
+				lua_pushstring (script->state, (const char*) argv[optind]);
+				lua_pushstring (script->state, linktype);
 
 				rval = lua_pcall (script->state, 2, 0, 0);
 
