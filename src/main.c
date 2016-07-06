@@ -24,7 +24,7 @@ static int exitno;
 static void
 capdiss_usage (const char *p)
 {
-	fprintf (stderr, "Usage: %s <options> <pcap-file> ...\n\n\
+	fprintf (stderr, "Usage: %s <options> <pcap-file>\n\n\
 Options:\n\
  -r, --run <file>           run Lua script from file\n\
  -s, --run-source <code>    run Lua source code\n\
@@ -158,150 +158,148 @@ main (int argc, char *argv[])
 	//
 	// Loop through available pcap files
 	//
-	for ( ; optind < argc; optind++ ){
-		pkt_cnt = 0;
-		pcap_res = pcap_open_offline_with_tstamp_precision (argv[optind], PCAP_TSTAMP_PRECISION_MICRO, errbuff);
+	pkt_cnt = 0;
+	pcap_res = pcap_open_offline_with_tstamp_precision (argv[optind], PCAP_TSTAMP_PRECISION_MICRO, errbuff);
 
-		if ( pcap_res == NULL ){
+	if ( pcap_res == NULL ){
 
-			// Are we reading from a standard input?
-			if ( argv[optind][0] == '-' && argv[optind][1] == '\0' )
-				fprintf (stderr, "%s: cannot interpret input data: %s\n", argv[0], errbuff);
-			else
-				fprintf (stderr, "%s: cannot open file %s\n", argv[0], errbuff);
+		// Are we reading from a standard input?
+		if ( argv[optind][0] == '-' && argv[optind][1] == '\0' )
+			fprintf (stderr, "%s: cannot interpret input data: %s\n", argv[0], errbuff);
+		else
+			fprintf (stderr, "%s: cannot open file %s\n", argv[0], errbuff);
 
+		exitno = EXIT_FAILURE;
+		goto cleanup;
+	}
+
+	// Get pcap file data link value and convert it to string.
+	// This string is passed to Lua function 'begin'.
+	linktype = pcap_datalink_val_to_name (pcap_datalink (pcap_res));
+
+	if ( bpf != NULL ){
+		struct bpf_program bpf_prog;
+
+		rval = pcap_compile (pcap_res, &bpf_prog, bpf, 1, PCAP_NETMASK_UNKNOWN);
+
+		if ( rval == -1 ){
+			fprintf (stderr, "%s: cannot compile packet filter program: %s\n", argv[0], pcap_geterr (pcap_res));
 			exitno = EXIT_FAILURE;
 			goto cleanup;
 		}
 
-		// Get pcap file data link value and convert it to string.
-		// This string is passed to Lua function 'begin'.
-		linktype = pcap_datalink_val_to_name (pcap_datalink (pcap_res));
+		rval = pcap_setfilter (pcap_res, &bpf_prog);
 
-		if ( bpf != NULL ){
-			struct bpf_program bpf_prog;
-
-			rval = pcap_compile (pcap_res, &bpf_prog, bpf, 1, PCAP_NETMASK_UNKNOWN);
-
-			if ( rval == -1 ){
-				fprintf (stderr, "%s: cannot compile packet filter program: %s\n", argv[0], pcap_geterr (pcap_res));
-				exitno = EXIT_FAILURE;
-				goto cleanup;
-			}
-
-			rval = pcap_setfilter (pcap_res, &bpf_prog);
-
-			if ( rval == -1 ){
-				pcap_freecode (&bpf_prog);
-				fprintf (stderr, "%s: cannot apply packet filter program: %s\n", argv[0], pcap_geterr (pcap_res));
-				exitno = EXIT_FAILURE;
-				goto cleanup;
-			}
-
+		if ( rval == -1 ){
 			pcap_freecode (&bpf_prog);
-			free (bpf);
-			bpf = NULL;
+			fprintf (stderr, "%s: cannot apply packet filter program: %s\n", argv[0], pcap_geterr (pcap_res));
+			exitno = EXIT_FAILURE;
+			goto cleanup;
 		}
 
-		//
-		// Load Lua scripts
-		//
-		for ( script = script_list.head; script != NULL; script = script->next ){
+		pcap_freecode (&bpf_prog);
+		free (bpf);
+		bpf = NULL;
+	}
 
-			if ( lscript_do_payload (script) != 0 ){
-				fprintf (stderr, "%s: %s\n", argv[0], lscript_strerror (script));
+	//
+	// Load Lua scripts
+	//
+	for ( script = script_list.head; script != NULL; script = script->next ){
+
+		if ( lscript_do_payload (script) != 0 ){
+			fprintf (stderr, "%s: %s\n", argv[0], lscript_strerror (script));
+			exitno = EXIT_FAILURE;
+			goto cleanup;
+		}
+
+		if ( (exitno == EXIT_SUCCESS) && (lscript_get_table_item (script, "begin", LUA_TFUNCTION) == 0) ){
+
+			if ( ! lua_checkstack (script->state, 2) ){
+				fprintf (stderr, "%s: oops, something went wrong, Lua stack is full!\n", argv[0]);
 				exitno = EXIT_FAILURE;
 				goto cleanup;
 			}
 
-			if ( (exitno == EXIT_SUCCESS) && (lscript_get_table_item (script, "begin", LUA_TFUNCTION) == 0) ){
+			lua_pushstring (script->state, (const char*) argv[optind]);
+			lua_pushstring (script->state, linktype);
 
-				if ( ! lua_checkstack (script->state, 2) ){
+			rval = lua_pcall (script->state, 2, 0, 0);
+
+			if ( rval != LUA_OK ){
+				fprintf (stderr, "%s: %s\n", argv[0], lua_tostring (script->state, -1));
+				exitno = EXIT_FAILURE;
+				goto cleanup;
+			}
+		}
+	}
+
+	while ( loop ){
+		rval = pcap_next_ex (pcap_res, &pkt_hdr, &pkt_data);
+
+		if ( rval == -1 ){
+			// Are we reading from a standard input?
+			if ( argv[optind][0] == '-' )
+				fprintf (stderr, "%s: reading a frame from input data failed: %s\n", argv[0], pcap_geterr (pcap_res));
+			else
+				fprintf (stderr, "%s: reading a frame from file '%s' failed: %s\n", argv[0], argv[optind], pcap_geterr (pcap_res));
+
+			exitno = EXIT_FAILURE;
+			goto cleanup;
+		} else if ( rval == -2 ){
+			// EOF
+			break;
+		}
+
+		pkt_cnt++;
+
+		for ( script = script_list.head; script != NULL; script = script->next ){
+
+			if ( ! script->ok )
+				continue;
+
+			if ( (exitno == EXIT_SUCCESS) && (lscript_get_table_item (script, "each", LUA_TFUNCTION) == 0) ){
+
+				if ( ! lua_checkstack (script->state, 3) ){
 					fprintf (stderr, "%s: oops, something went wrong, Lua stack is full!\n", argv[0]);
 					exitno = EXIT_FAILURE;
 					goto cleanup;
 				}
 
-				lua_pushstring (script->state, (const char*) argv[optind]);
-				lua_pushstring (script->state, linktype);
+				lua_pushlstring (script->state, (const char*) pkt_data, pkt_hdr->len);
+				lua_pushnumber (script->state, pkt_hdr->ts.tv_sec + pkt_hdr->ts.tv_usec);
+				lua_pushnumber (script->state, pkt_cnt);
 
-				rval = lua_pcall (script->state, 2, 0, 0);
+				rval = lua_pcall (script->state, 3, 0, 0);
 
 				if ( rval != LUA_OK ){
 					fprintf (stderr, "%s: %s\n", argv[0], lua_tostring (script->state, -1));
 					exitno = EXIT_FAILURE;
 					goto cleanup;
 				}
+			} else {
+				// If the method 'each' was not found first time, there is no
+				// reason to look for it again. The name of the field is
+				// somewhat ambiguous, please change it in future...
+				script->ok = 0;
 			}
 		}
+	}
 
-		while ( loop ){
-			rval = pcap_next_ex (pcap_res, &pkt_hdr, &pkt_data);
+	for ( script = script_list.head; script != NULL; script = script->next ){
+		if ( (exitno == EXIT_SUCCESS) && (lscript_get_table_item (script, "finish", LUA_TFUNCTION) == 0) ){
+			rval = lua_pcall (script->state, 0, 0, 0);
 
-			if ( rval == -1 ){
-				// Are we reading from a standard input?
-				if ( argv[optind][0] == '-' )
-					fprintf (stderr, "%s: reading a frame from input data failed: %s\n", argv[0], pcap_geterr (pcap_res));
-				else
-					fprintf (stderr, "%s: reading a frame from file '%s' failed: %s\n", argv[0], argv[optind], pcap_geterr (pcap_res));
-
+			if ( rval != LUA_OK ){
+				fprintf (stderr, "%s: %s\n", argv[0], lua_tostring (script->state, -1));
 				exitno = EXIT_FAILURE;
 				goto cleanup;
-			} else if ( rval == -2 ){
-				// EOF
-				break;
-			}
-
-			pkt_cnt++;
-
-			for ( script = script_list.head; script != NULL; script = script->next ){
-
-				if ( ! script->ok )
-					continue;
-
-				if ( (exitno == EXIT_SUCCESS) && (lscript_get_table_item (script, "each", LUA_TFUNCTION) == 0) ){
-
-					if ( ! lua_checkstack (script->state, 3) ){
-						fprintf (stderr, "%s: oops, something went wrong, Lua stack is full!\n", argv[0]);
-						exitno = EXIT_FAILURE;
-						goto cleanup;
-					}
-
-					lua_pushlstring (script->state, (const char*) pkt_data, pkt_hdr->len);
-					lua_pushnumber (script->state, pkt_hdr->ts.tv_sec + pkt_hdr->ts.tv_usec);
-					lua_pushnumber (script->state, pkt_cnt);
-
-					rval = lua_pcall (script->state, 3, 0, 0);
-
-					if ( rval != LUA_OK ){
-						fprintf (stderr, "%s: %s\n", argv[0], lua_tostring (script->state, -1));
-						exitno = EXIT_FAILURE;
-						goto cleanup;
-					}
-				} else {
-					// If the method 'each' was not found first time, there is no
-					// reason to look for it again. The name of the field is
-					// somewhat ambiguous, please change it in future...
-					script->ok = 0;
-				}
 			}
 		}
-
-		for ( script = script_list.head; script != NULL; script = script->next ){
-			if ( (exitno == EXIT_SUCCESS) && (lscript_get_table_item (script, "finish", LUA_TFUNCTION) == 0) ){
-				rval = lua_pcall (script->state, 0, 0, 0);
-
-				if ( rval != LUA_OK ){
-					fprintf (stderr, "%s: %s\n", argv[0], lua_tostring (script->state, -1));
-					exitno = EXIT_FAILURE;
-					goto cleanup;
-				}
-			}
-		}
-
-		pcap_close (pcap_res);
-		pcap_res = NULL;
 	}
+
+	pcap_close (pcap_res);
+	pcap_res = NULL;
 
 cleanup:
 	if ( bpf != NULL )
