@@ -28,6 +28,7 @@
 #include <lualib.h>
 
 #include "lscript_list.h"
+#include "capdiss.h"
 
 #if 0
 #include <stdio.h>
@@ -149,10 +150,29 @@ lscript_new (const char *payload, int type)
 
 	script->state = luaL_newstate ();
 
-	// FIXME: load only neccessary libraries!
+	return script;
+}
+
+int
+lscript_prepare (struct lscript *script)
+{
+	char version[16];
+
 	luaL_openlibs (script->state);
 
-	return script;
+	if ( ! lua_checkstack (script->state, 1) )
+		return 1;
+
+	snprintf (version, sizeof (version), "capdiss %d.%d.%d",
+											CAPDISS_VERSION_MAJOR,
+											CAPDISS_VERSION_MINOR,
+											CAPDISS_VERSION_PATCH);
+
+	lua_pushstring (script->state, version);
+
+	lua_setglobal (script->state, "_CAPDISS_VERSION");
+
+	return 0;
 }
 
 int
@@ -214,6 +234,7 @@ lscript_get_table_item (struct lscript *script, const char *name, int type)
 	return 0;
 }
 
+#if 0
 int
 lscript_set_table_item (struct lscript *script, const char *name, int type, void *val)
 {
@@ -245,6 +266,7 @@ lscript_set_table_item (struct lscript *script, const char *name, int type, void
 
 	return 0;
 }
+#endif
 
 void
 lscript_list_init (struct lscript_list *script_env)

@@ -227,6 +227,12 @@ main (int argc, char *argv[])
 	//
 	for ( script = script_list.head; script != NULL; script = script->next ){
 
+		if ( lscript_prepare (script) != 0 ){
+			fprintf (stderr, "%s: %s\n", argv[0], lscript_strerror (script));
+			exitno = EXIT_FAILURE;
+			goto cleanup;
+		}
+
 		if ( lscript_do_payload (script) != 0 ){
 			fprintf (stderr, "%s: %s\n", argv[0], lscript_strerror (script));
 			exitno = EXIT_FAILURE;

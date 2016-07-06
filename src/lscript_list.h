@@ -63,6 +63,8 @@ extern void lscript_list_free (struct lscript_list *script_list);
 
 extern struct lscript* lscript_new (const char *payload, int type);
 
+extern int lscript_prepare (struct lscript *script);
+
 extern int lscript_do_payload (struct lscript *script);
 
 #if 0
@@ -71,7 +73,9 @@ extern void lscript_reset (struct lscript *script);
 
 extern int lscript_get_table_item (struct lscript *script, const char *name, int type);
 
+#if 0
 extern int lscript_set_table_item (struct lscript *script, const char *name, int type, void *val);
+#endif
 
 #endif
 
