@@ -225,7 +225,7 @@ main (int argc, char *argv[])
 	//
 	// Load Lua scripts
 	//
-	for ( script = script_list.head; script != NULL; script = script->next ){
+	for ( script = script_list.head; exitno == EXIT_SUCCESS && script != NULL; script = script->next ){
 
 		if ( lscript_prepare (script) != 0 ){
 			fprintf (stderr, "%s: %s\n", argv[0], lscript_strerror (script));
@@ -239,7 +239,7 @@ main (int argc, char *argv[])
 			goto cleanup;
 		}
 
-		if ( (exitno == EXIT_SUCCESS) && (lscript_get_table_item (script, "begin", LUA_TFUNCTION) == 0) ){
+		if ( lscript_get_table_item (script, "begin", LUA_TFUNCTION) == 0 ){
 
 			if ( ! lua_checkstack (script->state, 2) ){
 				fprintf (stderr, "%s: oops, something went wrong, Lua stack is full!\n", argv[0]);
@@ -279,12 +279,12 @@ main (int argc, char *argv[])
 
 		pkt_cnt++;
 
-		for ( script = script_list.head; script != NULL; script = script->next ){
+		for ( script = script_list.head; exitno == EXIT_SUCCESS && script != NULL; script = script->next ){
 
 			if ( ! script->ok )
 				continue;
 
-			if ( (exitno == EXIT_SUCCESS) && (lscript_get_table_item (script, "each", LUA_TFUNCTION) == 0) ){
+			if ( lscript_get_table_item (script, "each", LUA_TFUNCTION) == 0 ){
 
 				if ( ! lua_checkstack (script->state, 3) ){
 					fprintf (stderr, "%s: oops, something went wrong, Lua stack is full!\n", argv[0]);
@@ -312,8 +312,9 @@ main (int argc, char *argv[])
 		}
 	}
 
-	for ( script = script_list.head; script != NULL; script = script->next ){
-		if ( (exitno == EXIT_SUCCESS) && (lscript_get_table_item (script, "finish", LUA_TFUNCTION) == 0) ){
+	for ( script = script_list.head; exitno == EXIT_SUCCESS && script != NULL; script = script->next ){
+
+		if ( lscript_get_table_item (script, "finish", LUA_TFUNCTION) == 0 ){
 			rval = lua_pcall (script->state, 0, 0, 0);
 
 			if ( rval != LUA_OK ){
@@ -324,8 +325,27 @@ main (int argc, char *argv[])
 		}
 	}
 
-	pcap_close (pcap_res);
-	pcap_res = NULL;
+	if ( (exitno != EXIT_SUCCESS) && (exitno != EXIT_FAILURE) ){
+
+		if ( lscript_get_table_item (script, "sigaction", LUA_TFUNCTION) == 0 ){
+
+			if ( ! lua_checkstack (script->state, 1) ){
+				fprintf (stderr, "%s: oops, something went wrong, Lua stack is full!\n", argv[0]);
+				exitno = EXIT_FAILURE;
+				goto cleanup;
+			}
+
+			lua_pushinteger (script->state, exitno);
+
+			rval = lua_pcall (script->state, 1, 0, 0);
+
+			if ( rval != LUA_OK ){
+				fprintf (stderr, "%s: %s\n", argv[0], lua_tostring (script->state, -1));
+				exitno = EXIT_FAILURE;
+				goto cleanup;
+			}
+		}
+	}
 
 cleanup:
 	if ( bpf != NULL )
