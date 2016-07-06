@@ -173,7 +173,6 @@ main (int argc, char *argv[])
 	// Setup signal handlers
 	signal (SIGINT, capdiss_terminate);
 	signal (SIGTERM, capdiss_terminate);
-	signal (SIGQUIT, capdiss_terminate);
 
 	//
 	// Loop through available pcap files
