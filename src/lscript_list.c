@@ -60,6 +60,21 @@ lua_get_table (lua_State *lua_state, const char *name)
 }
 
 static int
+lua_load_source (lua_State *lua_state, const char *source)
+{
+	if ( luaL_loadstring (lua_state, source) != LUA_OK )
+		return 1;
+
+	if ( lua_pcall (lua_state, 0, 1, 0) != LUA_OK )
+		return 1;
+
+	if ( lua_istable (lua_state, -1) )
+		lua_setglobal (lua_state, "capdiss");
+
+	return 0;
+}
+
+static int
 lua_load_file (lua_State *lua_state, const char *name)
 {
 	if ( luaL_loadfile (lua_state, name) != LUA_OK )
@@ -147,7 +162,7 @@ lscript_do_payload (struct lscript *script)
 
 	switch ( script->type ){
 		case LSCRIPT_SRC:
-			rval = luaL_dostring (script->state, script->payload);
+			rval = lua_load_source (script->state, script->payload);
 			break;
 
 		case LSCRIPT_FILE:
@@ -165,6 +180,7 @@ lscript_do_payload (struct lscript *script)
 	return rval;
 }
 
+#if 0
 void
 lscript_reset (struct lscript *script)
 {
@@ -174,6 +190,7 @@ lscript_reset (struct lscript *script)
 	script->state = luaL_newstate ();
 	luaL_openlibs (script->state);
 }
+#endif
 
 int
 lscript_get_table_item (struct lscript *script, const char *name, int type)
