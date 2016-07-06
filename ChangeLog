@@ -3,14 +3,23 @@ version 0.3.0
 
 * Capdiss table identificator is now lower-case ('Capdiss' => 'capdiss').
 
-* Accept and process multiple pcap files specified on the command line.
-
 * Pass filename and link-type as parameters to the method 'capdiss.begin'.
 
 * Change parameters of method 'capdiss.each'. Pass frame data as a first
 parameter followed by a timestamp and at last frame's number.
 
 * Pass frame timestamp in microseconds.
+
+* Change command line argument '-e, --source' => '-s, --run-source'.
+
+* Change command line argument '-f, --file' => '-r, --run'.
+
+* Change command line argument '-t, --filter' => '-F, --filter'.
+
+* Support scripts written using Lua 5.2 conventions.
+
+* Search scripts in paths stored in LUA_PATH as Lua function 'require' would
+do.
 
 version 0.2.1
 -------------
