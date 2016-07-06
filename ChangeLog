@@ -6,9 +6,9 @@ version 0.3.0
 * Pass filename and link-type as parameters to the method 'capdiss.begin'.
 
 * Change parameters of method 'capdiss.each'. Pass frame data as a first
-parameter followed by a timestamp and at last frame's number.
+parameter, followed by a frame timestamp and at last a frame number.
 
-* Pass frame timestamp in microseconds.
+* Frame timestamp is now in microseconds.
 
 * Change command line argument '-e, --source' => '-s, --run-source'.
 
@@ -18,8 +18,13 @@ parameter followed by a timestamp and at last frame's number.
 
 * Support scripts written using Lua 5.2 conventions.
 
-* Search scripts in paths stored in LUA_PATH as Lua function 'require' would
-do.
+* Search scripts in LUA_PATH as Lua function 'require' would do.
+
+* Capdiss version information stored inside Lua variable _CAPDISS_VERSION.
+
+* Add support for new function 'sigaction' which, if defined, is triggered
+after a signal is delivered to capdiss. The function takes one parameter, the
+signal number.
 
 version 0.2.1
 -------------
