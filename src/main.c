@@ -178,7 +178,14 @@ main (int argc, char *argv[])
 	// Loop through available pcap files
 	//
 	pkt_cnt = 0;
+
+#ifdef __linux__
 	pcap_res = pcap_open_offline_with_tstamp_precision (argv[optind], PCAP_TSTAMP_PRECISION_MICRO, errbuff);
+#elif _WIN32
+	pcap_res = pcap_open_offline (argv[optind], errbuff);
+#else
+#error "Unsupported platform!"
+#endif
 
 	if ( pcap_res == NULL ){
 
@@ -199,7 +206,7 @@ main (int argc, char *argv[])
 	if ( bpf != NULL ){
 		struct bpf_program bpf_prog;
 
-		rval = pcap_compile (pcap_res, &bpf_prog, bpf, 1, PCAP_NETMASK_UNKNOWN);
+		rval = pcap_compile (pcap_res, &bpf_prog, bpf, 1, 0);
 
 		if ( rval == -1 ){
 			fprintf (stderr, "%s: cannot compile packet filter program: %s\n", argv[0], pcap_geterr (pcap_res));
