@@ -181,10 +181,8 @@ main (int argc, char *argv[])
 
 #ifdef __linux__
 	pcap_res = pcap_open_offline_with_tstamp_precision (argv[optind], PCAP_TSTAMP_PRECISION_MICRO, errbuff);
-#elif _WIN32
-	pcap_res = pcap_open_offline (argv[optind], errbuff);
 #else
-#error "Unsupported platform!"
+	pcap_res = pcap_open_offline (argv[optind], errbuff);
 #endif
 
 	if ( pcap_res == NULL ){
