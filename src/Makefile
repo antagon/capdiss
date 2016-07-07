@@ -4,7 +4,7 @@ LDFLAGS = -lpcap -llua
 INSTALL_PATH = /usr/local/bin
 TARGET = capdiss
 
-.DUMMY: clean install
+.DUMMY: all clean install uninstall
 
 all: $(TARGET)
 
