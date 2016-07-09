@@ -1,0 +1,34 @@
+capdiss - Capture file dissector with embedded Lua interpreter.
+
+1. Dependencies
+
+- Lua 5.2 or latter (if building a dynamically linked binary)
+
+- libpcap 1.0 or latter.
+
+2. Compilation
+
+On Linux run `make` to start a compilation, if all dependencies are met, a
+compiled binary file 'capdiss' will be placed inside src/ directory. Calling
+`make` will produce a dynamically linked binary, if you wish to link to Lua
+statically, run `make LUA_STATIC=1`. Please note that, variable LUA_STATIC has
+only influence over the linking with Lua.
+
+On Windows run `make -f Makefile.win` to start a compilation. When compiling
+for Windows both Lua and winpcap are linked statically.
+
+3. Installation
+
+Run `make install`. This will install the compiled binary file into
+/usr/local/bin, unless this option is overriden. To override the default
+install directory, use `make install INSTALL_PATH=/your/new/path`.
+
+On Windows, installation rule is not available. User must place the compiled
+binary in a directory of his choosing, preferably in one that is being
+referenced by the Path system variable.
+
+4. License
+
+This program is licensed under MIT license. See LICENSE file that is being
+distributed along this file.
+

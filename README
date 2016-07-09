@@ -5,6 +5,5 @@ capdiss - CAPture file DISSector
 Capture file dissector with embedded Lua interpreter. With this tool an analyst
 has access to powerful scripting environment that can be used for endless
 variety of tasks, starting from simple packet dissection to building
-sophisticated data-driven programs. The usage of the tool is loosely based on
-principles of awk.
+sophisticated data-driven programs.
 

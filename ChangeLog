@@ -3,20 +3,20 @@ version 0.3.0
 
 * Capdiss table identificator is now lower-case ('Capdiss' => 'capdiss').
 
-* Pass filename and link-type as parameters to the method 'capdiss.begin'.
-
-* Change parameters of method 'capdiss.each'. Pass frame data as a first
-parameter, followed by a frame timestamp and at last a frame number.
-
-* Frame timestamp is now in microseconds.
-
 * Change command line argument '-e, --source' => '-s, --run-source'.
 
 * Change command line argument '-f, --file' => '-r, --run'.
 
 * Change command line argument '-t, --filter' => '-F, --filter'.
 
-* Support scripts written using Lua 5.2 conventions.
+* Pass filename and link-type as parameters to function 'capdiss.begin'.
+
+* Parameter order for method 'capdiss.each' has changed. Pass frame data
+first, followed by a frame timestamp and at last a frame number.
+
+* Frame timestamp is now in microseconds.
+
+* Support scripts written using Lua 5.2 module conventions.
 
 * Search scripts in LUA_PATH as Lua function 'require' would do.
 
@@ -25,6 +25,10 @@ parameter, followed by a frame timestamp and at last a frame number.
 * Add support for new function 'sigaction' which, if defined, is triggered
 after a signal is delivered to capdiss. The function takes one parameter, the
 signal number.
+
+* Allow ptional static linking with Lua-5.2.X when building capdiss.
+
+* Changes that allows portability to MS Windows. Makefile included.
 
 version 0.2.1
 -------------

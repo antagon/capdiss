@@ -1,7 +1,9 @@
-version ?.?.?
--------------
-
 * Pass argument/s to a script that is being read from a file. This allows to
 specify run options like a user would normally do if running the script from
 the shell.
+
+* Watch script execution and terminate the ones that are caught in endless
+loop.
+
+* Sanbox Lua scripts. Prohibit potentially dangerous functions from running.
 
