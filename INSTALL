@@ -14,8 +14,8 @@ compiled binary file 'capdiss' will be placed inside src/ directory. Calling
 statically, run `make LUA_STATIC=1`. Please note that, variable LUA_STATIC has
 only influence over the linking with Lua.
 
-On Windows run `make -f Makefile.win` to start a compilation. When compiling
-for Windows both Lua and winpcap are linked statically.
+On Windows run `make -f Makefile.win CC=mingw32-gcc` to start a compilation.
+When compiling for Windows both Lua and winpcap are linked statically.
 
 3. Installation
 
