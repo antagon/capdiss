@@ -7,7 +7,6 @@ OBJECTS = main.o lscript_list.o pathname.o ./vendor/lib/win32/liblua.a ./vendor/
 TARGET = capdiss.exe
 
 CFLAGS = -I ./vendor/include/win32 -O2 -pedantic -ggdb -Wall
-LDFLAGS = $(LDFLAGS)
 
 .DUMMY: all clean
 
