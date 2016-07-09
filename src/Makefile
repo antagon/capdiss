@@ -1,14 +1,24 @@
-CFLAGS = -O2 -pedantic -ggdb -Wall
-LDFLAGS = -lpcap -llua
+OBJECTS = main.o lscript_list.o pathname.o
+TARGET = capdiss
 
 INSTALL_PATH = /usr/local/bin
-TARGET = capdiss
+
+CFLAGS = -O2 -pedantic -ggdb -Wall
+LDFLAGS = -lpcap
+
+ifdef LUA_STATIC
+OBJECTS += ./vendor/lib/liblua.a
+CFLAGS += -I ./vendor/include
+LDFLAGS += -lm -ldl
+else
+LDFLAGS += -llua
+endif
 
 .DUMMY: all clean install uninstall
 
 all: $(TARGET)
 
-$(TARGET): main.o lscript_list.o pathname.o
+$(TARGET): $(OBJECTS)
 	$(CC) $(CFLAGS) $^ -o $(TARGET) $(LDFLAGS)
 
 main.o: main.c
