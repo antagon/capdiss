@@ -12,7 +12,7 @@ CFLAGS = -O2 -pedantic -ggdb -Wall
 LDFLAGS = -lpcap
 
 ifdef LUA_STATIC
-OBJECTS += ./vendor/lib/liblua.a
+OBJECTS += ./vendor/lib/linux/liblua.a
 CFLAGS += -I ./vendor/include/linux
 LDFLAGS += -lm -ldl
 else
