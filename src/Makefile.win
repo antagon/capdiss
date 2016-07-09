@@ -3,10 +3,10 @@
 #
 # Copyright (c) 2016, CodeWard.org
 #
-OBJECTS = main.o lscript_list.o pathname.o ./vendor/lib/win32/liblua.a ./vendor/lib/win32/lib/libwpcap.a lib/win32/lib/libpacket.a
+OBJECTS = main.o lscript_list.o pathname.o ./vendor/lib/win32/liblua.a ./vendor/lib/win32/libwpcap.a ./vendor/lib/win32/libpacket.a
 TARGET = capdiss.exe
 
-CFLAGS = -I ./vendor/include -O2 -pedantic -ggdb -Wall
+CFLAGS = -I ./vendor/include/win32 -O2 -pedantic -ggdb -Wall
 LDFLAGS = $(LDFLAGS)
 
 .DUMMY: all clean
