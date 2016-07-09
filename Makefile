@@ -1,7 +1,8 @@
 #
-# Copyright (c) 2015, CodeWard.org
+# Linux Makefile.
 #
-
+# Copyright (c) 2016, CodeWard.org
+#
 all:
 	$(MAKE) -C src/
 
