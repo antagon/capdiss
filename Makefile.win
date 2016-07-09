@@ -1,0 +1,11 @@
+#
+# Makefile for MS Windows. Compile with mingw32 suite, or compatible.
+#
+# Copyright (c) 2016, CodeWard.org
+#
+all:
+	$(MAKE) -C src/ -f Makefile.win
+
+clean:
+	$(MAKE) -C src/ clean -f Makefile.win
+
