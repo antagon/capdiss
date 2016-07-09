@@ -1,0 +1,30 @@
+#
+# Makefile for MS Windows. Compile with mingw32 suite, or compatible.
+#
+# Copyright (c) 2016, CodeWard.org
+#
+OBJECTS = main.o lscript_list.o pathname.o ./vendor/lib/win32/liblua.a ./vendor/lib/win32/lib/libwpcap.a lib/win32/lib/libpacket.a
+TARGET = capdiss.exe
+
+CFLAGS = -I ./vendor/include -O2 -pedantic -ggdb -Wall
+LDFLAGS = $(LDFLAGS)
+
+.DUMMY: all clean
+
+all: $(TARGET)
+
+$(TARGET): $(OBJECTS)
+	$(CC) $(CFLAGS) $^ -o $(TARGET) $(LDFLAGS)
+
+main.o: main.c
+	$(CC) $(CFLAGS) -c $^
+
+lscript_list.o: lscript_list.c
+	$(CC) $(CFLAGS) -c $^
+
+pathname.o: pathname.c
+	$(CC) $(CFLAGS) -c $^
+
+clean:
+	del $(TARGET) *.o
+
