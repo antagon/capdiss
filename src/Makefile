@@ -1,3 +1,8 @@
+#
+# Linux Makefile.
+#
+# Copyright (c) 2016, CodeWard.org
+#
 OBJECTS = main.o lscript_list.o pathname.o
 TARGET = capdiss
 
