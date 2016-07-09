@@ -11,11 +11,12 @@ capdiss - Capture file dissector with embedded Lua interpreter.
 On Linux run `make` to start a compilation, if all dependencies are met, a
 compiled binary file 'capdiss' will be placed inside src/ directory. Calling
 `make` will produce a dynamically linked binary, if you wish to link to Lua
-statically, run `make LUA_STATIC=1`. Please note that, variable LUA_STATIC has
-only influence over the linking with Lua.
+statically, run `make LUA_STATIC=1`.
 
 On Windows run `make -f Makefile.win CC=mingw32-gcc` to start a compilation.
 When compiling for Windows, Lua is always compiled statically.
+
+To produce stripped binary, define a Makefile variable 'STRIPPED'.
 
 3. Installation
 
