@@ -13,7 +13,7 @@ LDFLAGS = -lpcap
 
 ifdef LUA_STATIC
 OBJECTS += ./vendor/lib/liblua.a
-CFLAGS += -I ./vendor/include/lua
+CFLAGS += -I ./vendor/include/linux
 LDFLAGS += -lm -ldl
 else
 LDFLAGS += -llua
