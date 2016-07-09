@@ -25,8 +25,6 @@
 #define _LSCRIPT_LIST_H
 
 #include <lua.h>
-#include <lauxlib.h>
-#include <lualib.h>
 
 #define CAPDISS_TABLE "capdiss"
 
