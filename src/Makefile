@@ -25,6 +25,9 @@ all: $(TARGET)
 
 $(TARGET): $(OBJECTS)
 	$(CC) $(CFLAGS) $^ -o $(TARGET) $(LDFLAGS)
+ifdef STRIPPED
+	strip $(TARGET)
+endif
 
 main.o: main.c
 	$(CC) $(CFLAGS) -c $^
