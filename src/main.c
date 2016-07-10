@@ -90,6 +90,7 @@ main (int argc, char *argv[])
 	int rval, c, opt_index;
 
 	loop = 1;
+	pkt_cnt = 0;
 	bpf = NULL;
 	pcap_res = NULL;
 	linktype = NULL;
@@ -173,11 +174,6 @@ main (int argc, char *argv[])
 	// Setup signal handlers
 	signal (SIGINT, capdiss_terminate);
 	signal (SIGTERM, capdiss_terminate);
-
-	//
-	// Loop through available pcap files
-	//
-	pkt_cnt = 0;
 
 #ifdef __linux__
 	pcap_res = pcap_open_offline_with_tstamp_precision (argv[optind], PCAP_TSTAMP_PRECISION_MICRO, errbuff);
