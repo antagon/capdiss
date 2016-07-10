@@ -156,21 +156,29 @@ lscript_new (const char *payload, int type)
 int
 lscript_prepare (struct lscript *script)
 {
-	char version[16];
+	char buff[16];
 
 	luaL_openlibs (script->state);
 
 	if ( ! lua_checkstack (script->state, 1) )
 		return 1;
 
-	snprintf (version, sizeof (version), "capdiss %d.%d.%d",
-											CAPDISS_VERSION_MAJOR,
-											CAPDISS_VERSION_MINOR,
-											CAPDISS_VERSION_PATCH);
+	snprintf (buff, sizeof (buff), "capdiss %d.%d.%d", CAPDISS_VERSION_MAJOR,
+										CAPDISS_VERSION_MINOR, CAPDISS_VERSION_PATCH);
 
-	lua_pushstring (script->state, version);
+	lua_pushstring (script->state, buff);
 
 	lua_setglobal (script->state, "_CAPDISS_VERSION");
+
+#ifdef __linux__
+	snprintf (buff, sizeof (buff), "%s", "linux");
+#elif _win32
+	snprintf (buff, sizeof (buff), "%s", "windows");
+#endif
+
+	lua_pushstring (script->state, buff);
+
+	lua_setglobal (script->state, "_OS");
 
 	return 0;
 }
