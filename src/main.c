@@ -191,7 +191,7 @@ main (int argc, char *argv[])
 		if ( argv[optind][0] == '-' && argv[optind][1] == '\0' )
 			fprintf (stderr, "%s: cannot interpret input data: %s\n", argv[0], errbuff);
 		else
-			fprintf (stderr, "%s: cannot open file %s\n", argv[0], errbuff);
+			fprintf (stderr, "%s: cannot open file: %s\n", argv[0], errbuff);
 
 		exitno = EXIT_FAILURE;
 		goto cleanup;
@@ -297,7 +297,7 @@ main (int argc, char *argv[])
 				}
 
 				lua_pushlstring (script->state, (const char*) pkt_data, pkt_hdr->len);
-				lua_pushnumber (script->state, pkt_hdr->ts.tv_sec + pkt_hdr->ts.tv_usec);
+				lua_pushnumber (script->state, pkt_hdr->ts.tv_sec + (pkt_hdr->ts.tv_usec / 1000000));
 				lua_pushnumber (script->state, pkt_cnt);
 
 				rval = lua_pcall (script->state, 3, 0, 0);
