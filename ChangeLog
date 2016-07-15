@@ -3,9 +3,15 @@ version 0.3.0
 
 * Capdiss table identificator is now lower-case ('Capdiss' => 'capdiss').
 
-* Change command line argument '-e, --source' => '-s, --run-source'.
+* Running an inline source code with argument '-e, --source' code is not
+supported anymore.
 
-* Change command line argument '-f, --file' => '-r, --run'.
+* Argument '-f, --file' accepts pcap file instead of lua script file.
+
+* Script file (or name) can only be specified by non-option argument, and each
+instance of the program can run only one script.
+
+* Pass arguments to Lua script specified on command line.
 
 * Change command line argument '-t, --filter' => '-F, --filter'.
 
@@ -20,15 +26,17 @@ first, followed by a frame timestamp and at last a frame number.
 
 * Search scripts in LUA_PATH as Lua function 'require' would do.
 
-* Capdiss version information stored inside Lua variable _CAPDISS_VERSION.
+* Set global variable _CAPDISS_VERSION.
+
+* Set global variable _OS.
 
 * Add support for new function 'sigaction' which, if defined, is triggered
 after a signal is delivered to capdiss. The function takes one parameter, the
 signal number.
 
-* Allow ptional static linking with Lua-5.2.X when building capdiss.
+* Allow optional static linking with Lua 5.2 when building capdiss.
 
-* Changes that allows portability to MS Windows. Makefile included.
+* Changes that allow portability to MS Windows. Makefile included.
 
 version 0.2.1
 -------------

@@ -16,7 +16,7 @@ statically, run `make LUA_STATIC=1`.
 On Windows run `make -f Makefile.win CC=mingw32-gcc` to start a compilation.
 When compiling for Windows, Lua is always compiled statically.
 
-To produce stripped binary, define a Makefile variable 'STRIPPED'.
+To produce a stripped binary, define Makefile variable 'STRIPPED'.
 
 3. Installation
 

@@ -3,7 +3,7 @@
 #
 # Copyright (c) 2016, CodeWard.org
 #
-OBJECTS = main.o lscript_list.o pathname.o
+OBJECTS = main.o lscript_list.o pathname.o flist.o
 TARGET = capdiss
 
 INSTALL_PATH = /usr/local/bin
@@ -36,6 +36,9 @@ lscript_list.o: lscript_list.c
 	$(CC) $(CFLAGS) -c $^
 
 pathname.o: pathname.c
+	$(CC) $(CFLAGS) -c $^
+
+flist.o: flist.c
 	$(CC) $(CFLAGS) -c $^
 
 install:
