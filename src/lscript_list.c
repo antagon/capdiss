@@ -116,7 +116,7 @@ lua_load_module (lua_State *lua_state, const char *name)
 	return 0;
 }
 
-static void
+void
 lscript_free (struct lscript *script)
 {
 	if ( script->state != NULL )
@@ -154,12 +154,16 @@ lscript_new (const char *payload, int type)
 }
 
 int
-lscript_prepare (struct lscript *script)
+lscript_prepare (struct lscript *script, int argc, char *argv[])
 {
 	char buff[16];
+	int i;
 
 	luaL_openlibs (script->state);
 
+	//
+	// Set _CAPDISS_VERSION variable
+	//
 	if ( ! lua_checkstack (script->state, 1) )
 		return 1;
 
@@ -170,6 +174,12 @@ lscript_prepare (struct lscript *script)
 
 	lua_setglobal (script->state, "_CAPDISS_VERSION");
 
+	//
+	// Set _OS variable
+	//
+	if ( ! lua_checkstack (script->state, 1) )
+		return 1;
+
 #ifdef __linux__
 	snprintf (buff, sizeof (buff), "%s", "linux");
 #elif _win32
@@ -179,6 +189,23 @@ lscript_prepare (struct lscript *script)
 	lua_pushstring (script->state, buff);
 
 	lua_setglobal (script->state, "_OS");
+
+	//
+	// Set args variable
+	//
+	lua_createtable (script->state, argc, 0);
+
+	for ( i = 0; i < argc; i++ ){
+
+		if ( ! lua_checkstack (script->state, 2) )
+			return 1;
+
+		lua_pushinteger (script->state, i);
+		lua_pushstring (script->state, argv[i]);
+		lua_settable (script->state, -3);
+	}
+
+	lua_setglobal (script->state, "args");
 
 	return 0;
 }
@@ -241,40 +268,6 @@ lscript_get_table_item (struct lscript *script, const char *name, int type)
 
 	return 0;
 }
-
-#if 0
-int
-lscript_set_table_item (struct lscript *script, const char *name, int type, void *val)
-{
-	if ( lua_get_table (script->state, CAPDISS_TABLE) == 1 )
-		return 1;
-
-	switch ( type ){
-		case LUA_TNIL:
-			lua_pushnil (script->state);
-			break;
-
-		case LUA_TBOOLEAN:
-			lua_pushboolean (script->state, (int) *((int*) val));
-			break;
-
-		case LUA_TNUMBER:
-			lua_pushnumber (script->state, (lua_Number) *((lua_Number*) val));
-			break;
-
-		case LUA_TSTRING:
-			lua_pushstring (script->state, (const char*) val);
-			break;
-
-		default:
-			return 1;
-	}
-
-	lua_setfield (script->state, -2, name);
-
-	return 0;
-}
-#endif
 
 void
 lscript_list_init (struct lscript_list *script_env)
