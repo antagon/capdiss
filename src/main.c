@@ -47,10 +47,10 @@ capdiss_usage (const char *p)
 {
 	fprintf (stderr, "Usage: %s <options> <script-name> [args ...]\n\n\
 Options:\n\
- -f, --file=<pcap-file>     read network frames from a file\n\
- -F, --filter=<filter>      apply packet filter before reading from a file\n\
- -v, --version              show version information\n\
- -h, --help                 show usage information\n", p);
+ -f, --file=<pcap-file>    read network frames from a file\n\
+ -F, --filter=<filter>     apply packet filter before reading from a file\n\
+ -v, --version             show version information\n\
+ -h, --help                show usage information\n", p);
 }
 
 static void
@@ -101,6 +101,10 @@ main (int argc, char *argv[])
 	flist_init (&files);
 	memset (&ifstatus, 0, sizeof (struct stat));
 
+	// Setup signal handlers
+	signal (SIGINT, capdiss_terminate);
+	signal (SIGTERM, capdiss_terminate);
+
 	while ( (c = getopt_long (argc, argv, "+f:F:hv", opt_long, &opt_index)) != -1 ){
 
 		switch ( c ){
@@ -144,9 +148,58 @@ main (int argc, char *argv[])
 		goto cleanup;
 	}
 
-	// Setup signal handlers
-	signal (SIGINT, capdiss_terminate);
-	signal (SIGTERM, capdiss_terminate);
+	//
+	// Load Lua script
+	//
+	errno = 0;
+	rval = stat (argv[optind], &ifstatus);
+
+	if ( rval == -1 && errno != ENOENT ){
+		fprintf (stderr, "%s: cannot stat input file '%s': %s\n", argv[0], optarg, strerror (errno));
+		exitno = EXIT_FAILURE;
+		goto cleanup;
+	}
+
+	// If stat on a file failed, try to load it as a module using 'require'.
+	if ( errno != 0 )
+		script = lscript_new (argv[optind], LSCRIPT_MOD);
+	else
+		script = lscript_new (argv[optind], LSCRIPT_FILE);
+
+	if ( script == NULL ){
+		fprintf (stderr, "%s: cannot allocate memory: %s\n", argv[0], strerror (errno));
+		exitno = EXIT_FAILURE;
+		goto cleanup;
+	}
+
+	script_args = (char**) malloc (sizeof (char*) * (argc - optind + 1));
+
+	if ( script_args == NULL ){
+		fprintf (stderr, "%s: cannot allocate memory: %s\n", argv[0], strerror (errno));
+		exitno = EXIT_FAILURE;
+		goto cleanup;
+	}
+
+	// Copy pointers to argv...
+	script_args[0] = argv[optind];
+
+	for ( c = 1; c < (argc - optind); c++ )
+		script_args[c] = argv[optind + c];
+
+	if ( lscript_prepare (script, argc - optind, script_args) != 0 ){
+		free (script_args);
+		fprintf (stderr, "%s: cannot prepare Lua environment: %s\n", argv[0], lscript_strerror (script));
+		exitno = EXIT_FAILURE;
+		goto cleanup;
+	}
+
+	free (script_args);
+
+	if ( lscript_do_payload (script) != 0 ){
+		fprintf (stderr, "%s: %s\n", argv[0], lscript_strerror (script));
+		exitno = EXIT_FAILURE;
+		goto cleanup;
+	}
 
 	for ( file = files.head; file != NULL; file = file->next ){
 #ifdef __linux__
@@ -194,59 +247,6 @@ main (int argc, char *argv[])
 			pcap_freecode (&bpf_prog);
 			free (bpf);
 			bpf = NULL;
-		}
-
-		//
-		// Load Lua script
-		//
-		errno = 0;
-		rval = stat (argv[optind], &ifstatus);
-
-		if ( rval == -1 && errno != ENOENT ){
-			fprintf (stderr, "%s: cannot stat input file '%s': %s\n", argv[0], optarg, strerror (errno));
-			exitno = EXIT_FAILURE;
-			goto cleanup;
-		}
-
-		// If stat on a file failed, try to load it as a module using 'require'.
-		if ( errno != 0 )
-			script = lscript_new (argv[optind], LSCRIPT_MOD);
-		else
-			script = lscript_new (argv[optind], LSCRIPT_FILE);
-
-		if ( script == NULL ){
-			fprintf (stderr, "%s: cannot allocate memory: %s\n", argv[0], strerror (errno));
-			exitno = EXIT_FAILURE;
-			goto cleanup;
-		}
-
-		script_args = (char**) malloc (sizeof (char*) * (argc - optind + 1));
-
-		if ( script_args == NULL ){
-			fprintf (stderr, "%s: cannot allocate memory: %s\n", argv[0], strerror (errno));
-			exitno = EXIT_FAILURE;
-			goto cleanup;
-		}
-
-		// Copy pointers to argv...
-		script_args[0] = argv[optind];
-
-		for ( c = 1; c < (argc - optind); c++ )
-			script_args[c] = argv[optind + c];
-
-		if ( lscript_prepare (script, argc - optind, script_args) != 0 ){
-			free (script_args);
-			fprintf (stderr, "%s: cannot prepare Lua environment: %s\n", argv[0], lscript_strerror (script));
-			exitno = EXIT_FAILURE;
-			goto cleanup;
-		}
-
-		free (script_args);
-
-		if ( lscript_do_payload (script) != 0 ){
-			fprintf (stderr, "%s: %s\n", argv[0], lscript_strerror (script));
-			exitno = EXIT_FAILURE;
-			goto cleanup;
 		}
 
 		if ( exitno == EXIT_SUCCESS && lscript_get_table_item (script, "begin", LUA_TFUNCTION) == 0 ){
@@ -322,6 +322,10 @@ main (int argc, char *argv[])
 				goto cleanup;
 			}
 		}
+
+		// Close pcap resource, in case we have another file to process...
+		pcap_close (pcap_res);
+		pcap_res = NULL;
 	}
 
 	if ( (exitno != EXIT_SUCCESS) && (exitno != EXIT_FAILURE) ){
