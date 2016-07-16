@@ -252,7 +252,7 @@ main (int argc, char *argv[])
 		if ( exitno == EXIT_SUCCESS && lscript_get_table_item (script, "begin", LUA_TFUNCTION) == 0 ){
 
 			if ( ! lua_checkstack (script->state, 2) ){
-				fprintf (stderr, "%s: oops, something went wrong, Lua stack is full!\n", argv[0]);
+				fprintf (stderr, "%s: internal error: Lua stack is full\n", argv[0]);
 				exitno = EXIT_FAILURE;
 				goto cleanup;
 			}
@@ -291,7 +291,7 @@ main (int argc, char *argv[])
 			if ( exitno == EXIT_SUCCESS && lscript_get_table_item (script, "each", LUA_TFUNCTION) == 0 ){
 
 				if ( ! lua_checkstack (script->state, 3) ){
-					fprintf (stderr, "%s: oops, something went wrong, Lua stack is full!\n", argv[0]);
+					fprintf (stderr, "%s: internal error: Lua stack is full\n", argv[0]);
 					exitno = EXIT_FAILURE;
 					goto cleanup;
 				}
@@ -329,7 +329,7 @@ main (int argc, char *argv[])
 		if ( lscript_get_table_item (script, "sigaction", LUA_TFUNCTION) == 0 ){
 
 			if ( ! lua_checkstack (script->state, 1) ){
-				fprintf (stderr, "%s: oops, something went wrong, Lua stack is full!\n", argv[0]);
+				fprintf (stderr, "%s: internal error: Lua stack is full\n", argv[0]);
 				exitno = EXIT_FAILURE;
 				goto cleanup;
 			}

@@ -164,8 +164,10 @@ lscript_prepare (struct lscript *script, int argc, char *argv[])
 	//
 	// Set _CAPDISS_VERSION variable
 	//
-	if ( ! lua_checkstack (script->state, 1) )
+	if ( ! lua_checkstack (script->state, 1) ){
+		luaL_error (script->state, "Lua stack is full");
 		return 1;
+	}
 
 	snprintf (buff, sizeof (buff), "capdiss %d.%d.%d", CAPDISS_VERSION_MAJOR,
 										CAPDISS_VERSION_MINOR, CAPDISS_VERSION_PATCH);
@@ -177,8 +179,10 @@ lscript_prepare (struct lscript *script, int argc, char *argv[])
 	//
 	// Set _OS variable
 	//
-	if ( ! lua_checkstack (script->state, 1) )
+	if ( ! lua_checkstack (script->state, 1) ){
+		luaL_error (script->state, "Lua stack is full");
 		return 1;
+	}
 
 #ifdef __linux__
 	snprintf (buff, sizeof (buff), "%s", "linux");
