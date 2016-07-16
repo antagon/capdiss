@@ -161,7 +161,7 @@ main (int argc, char *argv[])
 	}
 
 	// If stat on a file failed, try to load it as a module using 'require'.
-	if ( errno != 0 )
+	if ( errno == ENOENT )
 		script = lscript_new (argv[optind], LSCRIPT_MOD);
 	else
 		script = lscript_new (argv[optind], LSCRIPT_FILE);
@@ -245,8 +245,6 @@ main (int argc, char *argv[])
 			}
 
 			pcap_freecode (&bpf_prog);
-			free (bpf);
-			bpf = NULL;
 		}
 
 		if ( exitno == EXIT_SUCCESS && lscript_get_table_item (script, "begin", LUA_TFUNCTION) == 0 ){
