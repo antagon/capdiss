@@ -8,7 +8,7 @@ TARGET = capdiss.exe
 
 CFLAGS = -I ./vendor/include/win32 -O2 -pedantic -ggdb -Wall
 
-.DUMMY: all clean
+.PHONY: all clean
 
 all: $(TARGET)
 

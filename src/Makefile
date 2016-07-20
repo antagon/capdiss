@@ -19,7 +19,7 @@ else
 LDFLAGS += -llua
 endif
 
-.DUMMY: all clean install uninstall
+.PHONY: all clean install uninstall
 
 all: $(TARGET)
 
