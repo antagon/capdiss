@@ -21,6 +21,7 @@
 * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 * SOFTWARE.
 */
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <lua.h>
@@ -30,22 +31,22 @@
 #include "lscript_list.h"
 #include "capdiss.h"
 
-#if 0
-#include <stdio.h>
-
-static void
-lua_dump_stack (lua_State *lua_state, const char *label)
+void
+lscript_dump_luastack (struct lscript *script, const char *label)
 {
 	int top, i, type;
-	top = lua_gettop (lua_state);
+
+	top = lua_gettop (script->state);
+
 	fprintf (stderr, ">>%s\n", label);
+
 	for ( i = top; i >= 1; i-- ){
-		type = lua_type (lua_state, i);
-		fprintf (stderr, "[%d] => %s\n", i, lua_typename (lua_state, type));
+		type = lua_type (script->state, i);
+		fprintf (stderr, "[%d] => %s\n", i, lua_typename (script->state, type));
 	}
+
 	fprintf (stderr, "<<END %s\n", label);
 }
-#endif
 
 static int
 lua_get_table (lua_State *lua_state, const char *name)
@@ -71,6 +72,8 @@ lua_load_source (lua_State *lua_state, const char *source)
 
 	if ( lua_istable (lua_state, -1) )
 		lua_setglobal (lua_state, "capdiss");
+	else
+		lua_pop (lua_state, 1);
 
 	return 0;
 }
@@ -86,6 +89,8 @@ lua_load_file (lua_State *lua_state, const char *name)
 
 	if ( lua_istable (lua_state, -1) )
 		lua_setglobal (lua_state, "capdiss");
+	else
+		lua_pop (lua_state, 1);
 
 	return 0;
 }
@@ -112,6 +117,8 @@ lua_load_module (lua_State *lua_state, const char *name)
 
 	if ( lua_istable (lua_state, -1) )
 		lua_setglobal (lua_state, "capdiss");
+	else
+		lua_pop (lua_state, 1);
 
 	return 0;
 }
