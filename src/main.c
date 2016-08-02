@@ -91,7 +91,6 @@ main (int argc, char *argv[])
 	int rval, c, opt_index;
 
 	loop = 1;
-	pkt_cnt = 0;
 	bpf = NULL;
 	pcap_res = NULL;
 	linktype = NULL;
@@ -219,6 +218,9 @@ main (int argc, char *argv[])
 			exitno = EXIT_FAILURE;
 			goto cleanup;
 		}
+
+		// Reinitialize value of the packet counter for each file.
+		pkt_cnt = 0;
 
 		// Get pcap file data link value and convert it to string.
 		// This string is passed to Lua function 'begin'.
