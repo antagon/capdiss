@@ -78,7 +78,7 @@ main (int argc, char *argv[])
 	char errbuff[PCAP_ERRBUF_SIZE];
 	unsigned long int pkt_cnt;
 	char **script_args;
-	char *bpf;
+	char *bpf, *stdout_type;
 	const char *linktype;
 	struct lscript *script;
 	struct option opt_long[] = {
@@ -171,6 +171,44 @@ main (int argc, char *argv[])
 		goto cleanup;
 	}
 
+	// Determine what type the stdout is. This may be helpful for scripts that
+	// use ASCII color sequences to not use them if stdout is redirected to
+	// another program via anonymous pipe, or to regular file.
+	memset (&ifstatus, 0, sizeof (struct stat));
+
+	if ( fstat (STDOUT_FILENO, &ifstatus) == -1 ){
+		fprintf (stderr, "%s: cannot determine the type of stdout: %s\n", argv[0], strerror (errno));
+		exitno = EXIT_FAILURE;
+		goto cleanup;
+	}
+
+	switch ( ifstatus.st_mode & S_IFMT ){
+		case S_IFREG:
+			stdout_type = "file";
+			break;
+
+		case S_IFCHR:
+			stdout_type = "chrdev";
+			break;
+
+		case S_IFBLK:
+			stdout_type = "blkdev";
+			break;
+
+		case S_IFSOCK:
+			stdout_type = "socket";
+			break;
+
+		case S_IFIFO:
+			stdout_type = "fifo";
+			break;
+
+		default:
+			stdout_type = "unknown";
+			break;
+	}
+
+	// Copy arguments that will be passed to Lua script.
 	script_args = (char**) malloc (sizeof (char*) * (argc - optind + 1));
 
 	if ( script_args == NULL ){
@@ -179,12 +217,12 @@ main (int argc, char *argv[])
 		goto cleanup;
 	}
 
-	// Copy pointers to argv...
 	script_args[0] = argv[optind];
 
 	for ( c = 1; c < (argc - optind); c++ )
 		script_args[c] = argv[optind + c];
 
+	// Prepare Lua environment.
 	if ( lscript_prepare (script, argc - optind, script_args) != 0 ){
 		free (script_args);
 		fprintf (stderr, "%s: cannot prepare Lua environment: %s\n", argv[0], lscript_strerror (script));
@@ -193,6 +231,12 @@ main (int argc, char *argv[])
 	}
 
 	free (script_args);
+
+	if ( lscript_set_glbstring (script, "_STDOUT_TYPE", stdout_type) == 1 ){
+		fprintf (stderr, "%s: cannot prepare Lua environment: %s\n", argv[0], lscript_strerror (script));
+		exitno = EXIT_FAILURE;
+		goto cleanup;
+	}
 
 	if ( lscript_do_payload (script) != 0 ){
 		fprintf (stderr, "%s: %s\n", argv[0], lscript_strerror (script));

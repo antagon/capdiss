@@ -69,6 +69,8 @@ extern int lscript_do_payload (struct lscript *script);
 
 extern int lscript_get_table_item (struct lscript *script, const char *name, int type);
 
+extern int lscript_set_glbstring (struct lscript *script, const char *name, const char *value);
+
 extern void lscript_dump_luastack (struct lscript *script, const char *label);
 
 #endif

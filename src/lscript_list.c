@@ -163,43 +163,9 @@ lscript_new (const char *payload, int type)
 int
 lscript_prepare (struct lscript *script, int argc, char *argv[])
 {
-	char buff[16];
 	int i;
 
 	luaL_openlibs (script->state);
-
-	//
-	// Set _CAPDISS_VERSION variable
-	//
-	if ( ! lua_checkstack (script->state, 1) ){
-		luaL_error (script->state, "Lua stack is full");
-		return 1;
-	}
-
-	snprintf (buff, sizeof (buff), "capdiss %d.%d.%d", CAPDISS_VERSION_MAJOR,
-										CAPDISS_VERSION_MINOR, CAPDISS_VERSION_PATCH);
-
-	lua_pushstring (script->state, buff);
-
-	lua_setglobal (script->state, "_CAPDISS_VERSION");
-
-	//
-	// Set _OS variable
-	//
-	if ( ! lua_checkstack (script->state, 1) ){
-		luaL_error (script->state, "Lua stack is full");
-		return 1;
-	}
-
-#ifdef __linux__
-	snprintf (buff, sizeof (buff), "%s", "linux");
-#elif _win32
-	snprintf (buff, sizeof (buff), "%s", "windows");
-#endif
-
-	lua_pushstring (script->state, buff);
-
-	lua_setglobal (script->state, "_OS");
 
 	//
 	// Set args variable
@@ -217,6 +183,39 @@ lscript_prepare (struct lscript *script, int argc, char *argv[])
 	}
 
 	lua_setglobal (script->state, "args");
+
+	//
+	// Set _CAPDISS_VERSION variable
+	//
+	if ( ! lua_checkstack (script->state, 1) ){
+		luaL_error (script->state, "Lua stack is full");
+		return 1;
+	}
+
+	lua_pushfstring (script->state, "capdiss %d.%d.%d",
+						CAPDISS_VERSION_MAJOR,
+						CAPDISS_VERSION_MINOR,
+						CAPDISS_VERSION_PATCH);
+
+	lua_setglobal (script->state, "_CAPDISS_VERSION");
+
+	//
+	// Set _OS variable
+	//
+	if ( ! lua_checkstack (script->state, 1) ){
+		luaL_error (script->state, "Lua stack is full");
+		return 1;
+	}
+
+#ifdef __linux__
+	lua_pushstring (script->state, "linux");
+#elif _win32
+	lua_pushstring (script->state, "windows");
+#else
+	lua_pushstring (script->state, "unknown");
+#endif
+
+	lua_setglobal (script->state, "_OS");
 
 	return 0;
 }
@@ -264,8 +263,10 @@ lscript_get_table_item (struct lscript *script, const char *name, int type)
 	if ( lua_get_table (script->state, CAPDISS_TABLE) == 1 )
 		return 1;
 
-	if ( ! lua_checkstack (script->state, 1) )
+	if ( ! lua_checkstack (script->state, 1) ){
+		luaL_error (script->state, "Lua stack is full");
 		return 1;
+	}
 
 	lua_pushstring (script->state, name);
 	lua_gettable (script->state, -2);
@@ -276,6 +277,21 @@ lscript_get_table_item (struct lscript *script, const char *name, int type)
 	}
 
 	lua_remove (script->state, -2);
+
+	return 0;
+}
+
+int
+lscript_set_glbstring (struct lscript *script, const char *name, const char *value)
+{
+	if ( ! lua_checkstack (script->state, 1) ){
+		luaL_error (script->state, "Lua stack is full");
+		return 1;
+	}
+
+	lua_pushstring (script->state, value);
+
+	lua_setglobal (script->state, name);
 
 	return 0;
 }
