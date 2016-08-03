@@ -30,6 +30,8 @@ first, followed by a frame timestamp and at last a frame number.
 
 * Set global variable _OS.
 
+* Set global variable _STDOUT_TYPE.
+
 * Add support for new function 'sigaction' which, if defined, is triggered
 after a signal is delivered to capdiss. The function takes one parameter, the
 signal number.
