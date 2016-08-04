@@ -195,9 +195,11 @@ main (int argc, char *argv[])
 			stdout_type = "blkdev";
 			break;
 
+#ifdef __linux__
 		case S_IFSOCK:
 			stdout_type = "socket";
 			break;
+#endif
 
 		case S_IFIFO:
 			stdout_type = "fifo";
