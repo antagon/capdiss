@@ -168,7 +168,7 @@ lscript_prepare (struct lscript *script, int argc, char *argv[])
 	luaL_openlibs (script->state);
 
 	//
-	// Set args variable
+	// Set arg variable
 	//
 	lua_createtable (script->state, argc, 0);
 
@@ -182,7 +182,7 @@ lscript_prepare (struct lscript *script, int argc, char *argv[])
 		lua_settable (script->state, -3);
 	}
 
-	lua_setglobal (script->state, "args");
+	lua_setglobal (script->state, "arg");
 
 	//
 	// Set _CAPDISS_VERSION variable
