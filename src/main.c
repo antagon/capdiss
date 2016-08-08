@@ -98,7 +98,6 @@ main (int argc, char *argv[])
 	exitno = EXIT_SUCCESS;
 
 	flist_init (&files);
-	memset (&ifstatus, 0, sizeof (struct stat));
 
 	// Setup signal handlers
 	signal (SIGINT, capdiss_terminate);
@@ -147,37 +146,14 @@ main (int argc, char *argv[])
 		goto cleanup;
 	}
 
-	//
-	// Load Lua script
-	//
-	errno = 0;
-	rval = stat (argv[optind], &ifstatus);
-
-	if ( rval == -1 && errno != ENOENT ){
-		fprintf (stderr, "%s: cannot stat input file '%s': %s\n", argv[0], optarg, strerror (errno));
-		exitno = EXIT_FAILURE;
-		goto cleanup;
-	}
-
-	// If stat on a file failed, try to load it as a module using 'require'.
-	if ( errno == ENOENT )
-		script = lscript_new (argv[optind], LSCRIPT_MOD);
-	else
-		script = lscript_new (argv[optind], LSCRIPT_FILE);
-
-	if ( script == NULL ){
-		fprintf (stderr, "%s: cannot allocate memory: %s\n", argv[0], strerror (errno));
-		exitno = EXIT_FAILURE;
-		goto cleanup;
-	}
-
 	// Determine what type the stdout is. This may be helpful for scripts that
 	// use ASCII color sequences to not use them if stdout is redirected to
 	// another program via anonymous pipe, or to regular file.
 	memset (&ifstatus, 0, sizeof (struct stat));
 
+	errno = 0;
 	if ( fstat (STDOUT_FILENO, &ifstatus) == -1 ){
-		fprintf (stderr, "%s: cannot determine the type of stdout: %s\n", argv[0], strerror (errno));
+		fprintf (stderr, "%s: stat failed 'stdout': %s\n", argv[0], strerror (errno));
 		exitno = EXIT_FAILURE;
 		goto cleanup;
 	}
@@ -208,6 +184,30 @@ main (int argc, char *argv[])
 		default:
 			stdout_type = "unknown";
 			break;
+	}
+
+	//
+	// Load Lua script
+	//
+	memset (&ifstatus, 0, sizeof (struct stat));
+
+	errno = 0;
+	if ( stat (argv[optind], &ifstatus) == -1 && errno != ENOENT ){
+		fprintf (stderr, "%s: stat failed '%s': %s\n", argv[0], optarg, strerror (errno));
+		exitno = EXIT_FAILURE;
+		goto cleanup;
+	}
+
+	// If stat on a file failed, try to load it as a module using 'require'.
+	if ( errno == ENOENT )
+		script = lscript_new (argv[optind], LSCRIPT_MOD);
+	else
+		script = lscript_new (argv[optind], LSCRIPT_FILE);
+
+	if ( script == NULL ){
+		fprintf (stderr, "%s: cannot allocate memory: %s\n", argv[0], strerror (errno));
+		exitno = EXIT_FAILURE;
+		goto cleanup;
 	}
 
 	// Copy arguments that will be passed to Lua script.
@@ -355,6 +355,7 @@ main (int argc, char *argv[])
 				}
 			} else {
 				// Function not found... no reason to continue reading other packets.
+				loop = 0;
 				break;
 			}
 		}
