@@ -115,6 +115,11 @@ main (int argc, char *argv[])
 				break;
 
 			case 'F':
+				// Prevent a memory leak, if the option is specified multiple
+				// times.
+				if ( bpf != NULL )
+					free (bpf);
+
 				bpf = strdup (optarg);
 
 				if ( bpf == NULL ){
