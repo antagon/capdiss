@@ -348,7 +348,7 @@ main (int argc, char *argv[])
 				}
 
 				lua_pushlstring (script->state, (const char*) pkt_data, pkt_hdr->len);
-				lua_pushnumber (script->state, pkt_hdr->ts.tv_sec + (pkt_hdr->ts.tv_usec / 1000000));
+				lua_pushnumber (script->state, pkt_hdr->ts.tv_sec + (pkt_hdr->ts.tv_usec / 1000000.0));
 				lua_pushnumber (script->state, pkt_cnt);
 
 				rval = lua_pcall (script->state, 3, 0, 0);
