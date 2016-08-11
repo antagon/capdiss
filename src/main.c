@@ -176,7 +176,7 @@ main (int argc, char *argv[])
 			stdout_type = "blkdev";
 			break;
 
-#ifdef __linux__
+#ifndef _WIN32
 		case S_IFSOCK:
 			stdout_type = "socket";
 			break;
@@ -252,10 +252,10 @@ main (int argc, char *argv[])
 	}
 
 	for ( file = files.head; file != NULL; file = file->next ){
-#ifdef __linux__
-		pcap_res = pcap_open_offline_with_tstamp_precision (file->path, PCAP_TSTAMP_PRECISION_MICRO, errbuff);
-#else
+#ifdef _WIN32
 		pcap_res = pcap_open_offline (file->path, errbuff);
+#else
+		pcap_res = pcap_open_offline_with_tstamp_precision (file->path, PCAP_TSTAMP_PRECISION_MICRO, errbuff);
 #endif
 
 		if ( pcap_res == NULL ){

@@ -209,7 +209,7 @@ lscript_prepare (struct lscript *script, int argc, char *argv[])
 
 #ifdef __linux__
 	lua_pushstring (script->state, "linux");
-#elif _win32
+#elif _WIN32
 	lua_pushstring (script->state, "windows");
 #else
 	lua_pushstring (script->state, "unknown");
