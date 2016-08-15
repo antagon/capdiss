@@ -1,9 +1,13 @@
-Homepage: http://codeward.org/software/capdiss
+# capdiss - CAPture file DISSector
 
-capdiss - CAPture file DISSector
+## [Homepage](https://codeward.org/software/capdiss)
 
-Capture file dissector with embedded Lua interpreter. With this tool an analyst
-has access to powerful scripting environment that can be used for endless
-variety of tasks, starting from simple packet dissection to building
-sophisticated data-driven programs.
+_Capdiss_ is a runtime environment for reading capture files (_pcap_, _pcap-ng_).
+It defines a simple event-driven API for _Lua_ scripts. The aim of capdiss is to
+provide a comfortable environment for packet manipulation, where an analyst
+has to write less code, to do more, in a type-safe language. To achieve that,
+_capdiss_ embeds powerful, yet minimalistic, scripting language _Lua_, and supports
+the native packet dissection framework [Coroner](https://codeward.org/software/coroner).
+
+_Capdiss_ is a free software licensed under **MIT License**.
 
