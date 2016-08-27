@@ -32,6 +32,7 @@
 #include <lualib.h>
 #include <sys/stat.h>
 #include <signal.h>
+#include <setjmp.h>
 #include <unistd.h>
 
 #include "capdiss.h"
@@ -41,6 +42,7 @@
 
 static int loop;
 static int exitno;
+static jmp_buf signal_script;
 
 static void
 capdiss_usage (const char *p)
@@ -64,6 +66,11 @@ capdiss_terminate (int signo)
 {
 	loop = 0;
 	exitno = signo;
+	// Reset a signal handler to default and jump back to main function.  This
+	// code breaks out from infinite loop (if there is one), yet still allows
+	// to execute scripts' sigaction hook.
+	signal (signo, SIG_DFL);
+	longjmp (signal_script, 1);
 }
 
 int
@@ -245,6 +252,12 @@ main (int argc, char *argv[])
 		goto cleanup;
 	}
 
+	// Do the long jump back here from a signal handler.
+	if ( setjmp (signal_script) ){
+		lscript_clear_stack (script);
+		goto pass_signal;
+	}
+
 	if ( lscript_do_payload (script) != 0 ){
 		fprintf (stderr, "%s: %s\n", argv[0], lscript_strerror (script));
 		exitno = EXIT_FAILURE;
@@ -380,6 +393,7 @@ main (int argc, char *argv[])
 		pcap_res = NULL;
 	}
 
+pass_signal:
 	if ( (exitno != EXIT_SUCCESS) && (exitno != EXIT_FAILURE) ){
 
 		if ( lscript_get_table_item (script, "sigaction", LUA_TFUNCTION) == 0 ){

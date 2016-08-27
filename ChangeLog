@@ -1,3 +1,11 @@
+version 0.3.1
+-------------
+
+* Make previously invincible scripts 'mortal'. This patch fixes problem where
+a script utilizing infinite loop was impossible to kill with a signal (i.e.
+SIGTERM). In this patch, script is killable and also a function hooked to
+sigaction gets to run before the program terminates.
+
 version 0.3.0
 -------------
 

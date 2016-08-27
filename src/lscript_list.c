@@ -48,6 +48,12 @@ lscript_dump_luastack (struct lscript *script, const char *label)
 	fprintf (stderr, "<<END %s\n", label);
 }
 
+void
+lscript_clear_stack (struct lscript *script)
+{
+	lua_settop (script->state, 0);
+}
+
 static int
 lua_get_table (lua_State *lua_state, const char *name)
 {
