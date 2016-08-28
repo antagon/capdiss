@@ -42,7 +42,11 @@
 
 static int loop;
 static int exitno;
+#ifdef _WIN32
+static jmp_buf signal_script;
+#else
 static sigjmp_buf signal_script;
+#endif
 
 static void
 capdiss_usage (const char *p)
@@ -64,7 +68,11 @@ capdiss_version (const char *p)
 static void
 capdiss_hardkill (int signo)
 {
+#ifdef _WIN32
+	longjmp (signal_script);
+#else
 	siglongjmp (signal_script, 2);
+#endif
 }
 
 static void
@@ -76,7 +84,11 @@ capdiss_terminate (int signo)
 	 * code breaks out from infinite loop (if there is one), yet still allows
 	 * to execute scripts' sigaction hook. */
 	signal (signo, capdiss_hardkill);
+#ifdef _WIN32
+	longjmp (signal_script);
+#else
 	siglongjmp (signal_script, 1);
+#endif
 }
 
 int
@@ -258,7 +270,11 @@ main (int argc, char *argv[])
 		goto cleanup;
 	}
 
+#ifdef _WIN32
+	rval = setjmp (signal_script);
+#else
 	rval = sigsetjmp (signal_script, 1);
+#endif
 
 	/* Do the long jump back here from a signal handler. Reset signal mask. */
 	if ( rval == 1 ){
