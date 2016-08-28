@@ -69,7 +69,7 @@ static void
 capdiss_hardkill (int signo)
 {
 #ifdef _WIN32
-	longjmp (signal_script);
+	longjmp (signal_script, 2);
 #else
 	siglongjmp (signal_script, 2);
 #endif
@@ -85,7 +85,7 @@ capdiss_terminate (int signo)
 	 * to execute scripts' sigaction hook. */
 	signal (signo, capdiss_hardkill);
 #ifdef _WIN32
-	longjmp (signal_script);
+	longjmp (signal_script, 1);
 #else
 	siglongjmp (signal_script, 1);
 #endif
