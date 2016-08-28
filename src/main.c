@@ -42,7 +42,7 @@
 
 static int loop;
 static int exitno;
-static jmp_buf signal_script;
+static sigjmp_buf signal_script;
 
 static void
 capdiss_usage (const char *p)
@@ -62,6 +62,12 @@ capdiss_version (const char *p)
 }
 
 static void
+capdiss_hardkill (int signo)
+{
+	siglongjmp (signal_script, 2);
+}
+
+static void
 capdiss_terminate (int signo)
 {
 	loop = 0;
@@ -69,8 +75,8 @@ capdiss_terminate (int signo)
 	/* Reset a signal handler to default and jump back to main function. This
 	 * code breaks out from infinite loop (if there is one), yet still allows
 	 * to execute scripts' sigaction hook. */
-	signal (signo, SIG_DFL);
-	longjmp (signal_script, 1);
+	signal (signo, capdiss_hardkill);
+	siglongjmp (signal_script, 1);
 }
 
 int
@@ -252,10 +258,14 @@ main (int argc, char *argv[])
 		goto cleanup;
 	}
 
-	/* Do the long jump back here from a signal handler. */
-	if ( setjmp (signal_script) ){
+	rval = sigsetjmp (signal_script, 1);
+
+	/* Do the long jump back here from a signal handler. Reset signal mask. */
+	if ( rval == 1 ){
 		lscript_clear_stack (script);
 		goto pass_signal;
+	} else if ( rval == 2 ){
+		goto cleanup;
 	}
 
 	if ( lscript_do_payload (script) != 0 ){
