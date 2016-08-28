@@ -6,6 +6,27 @@ a script utilizing infinite loop was impossible to kill with a signal (i.e.
 SIGTERM). In this patch, script is killable and also a function hooked to
 sigaction gets to run before the program terminates.
 
+* Fix Makefile so that it's possible to build on other distros. Most of the
+distributions put header files into '/usr/include/lua5.X' (where X is minor
+version) and Lua's shared object name contains a version information. This
+patch unfortunatelly breaks building on Fedora (and possibly other derivates).
+
+* New Makefile variable USE_LUA=<LUA_VERSION> which tells which version of the
+Lua library will be linked against. If not specified, Lua version 5.2 is
+assumed.
+
+* Static linking of Lua 5.2 has been removed from Makefile, including vendor
+files for GNU/Linux. This feature is unnecessary, as most of the distributions
+have required header files available through their package manager. On some
+distributions statically linked executable may not be able to see Lua modules
+installed via `luarocks`, depending on how system's Lua interpreter has been
+compiled. On some distributions `luarocks` installs Lua modules into
+'/usr/local/share/lua/X.Y', on others into '/usr/share/lua/X.Y'. In order to
+make the statically linked executable compatible with a distro, one has to
+rebuild Lua library from source (which is not available in our repository),
+and replace the static library in the source tree. There's no added value,
+only clutter along the way.
+
 version 0.3.0
 -------------
 

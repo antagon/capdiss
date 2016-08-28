@@ -1,32 +1,38 @@
-capdiss - Capture file dissector with embedded Lua interpreter.
+capdiss - a runtime environment for reading capture files (pcap, pcap-ng).
 
 1. Dependencies
 
-- Lua version 5.2 or latter (if building a dynamically linked binary)
+- Lua >= 5.2
 
-- libpcap version 1.0 or latter / winpcap version ??
+- libpcap >= 1.0
 
 2. Compilation
 
 On Linux run `make` to start a compilation, if all dependencies are met, a
 compiled binary file 'capdiss' will be placed inside src/ directory. Calling
-`make` will produce a dynamically linked binary, if you wish to link to Lua
-statically, run `make LUA_STATIC=1`.
+`make` will produce a dynamically linked binary.
 
-On Windows run `make -f Makefile.win CC=mingw32-gcc` to start a compilation.
-When compiling for Windows, Lua is always compiled statically.
+Optionally you can set following Makefile variables:
 
-To produce a stripped binary, define Makefile variable 'STRIPPED'.
+- STRIPPED=1 produces a stripped binary.
+
+- USE_LUA=<LUA_VERSION> link against Lua library version LUA_VERSION (i.e.
+  5.3), by default Lua version 5.2 is assumed.
+
+- INSTALL_PATH=/new/install/path override default installation path (/usr/local/bin).
+
+Example: `make STRIPPED=1 USE_LUA=5.3`
+
+On Windows, run `mingw32-make -f Makefile.win CC=mingw32-gcc` to start a compilation.
 
 3. Installation
 
 Run `make install`. This will install the compiled binary file into
-/usr/local/bin, unless this option is overriden. To override the default
-install directory, use `make install INSTALL_PATH=/your/new/path`.
+/usr/local/bin, unless this option is overriden.
 
 On Windows, installation rule is not available. User must place the compiled
 binary in a directory of his choosing, preferably in one that is being
-referenced by the Path system variable.
+referenced in system variable %PATH%.
 
 4. License
 

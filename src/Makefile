@@ -3,23 +3,20 @@
 #
 # Copyright (c) 2016, CodeWard.org
 #
+.PHONY: all clean install uninstall
 OBJECTS = main.o lscript_list.o pathname.o flist.o
 TARGET = capdiss
 
 INSTALL_PATH = /usr/local/bin
 
-CFLAGS = -O2 -pedantic -ggdb -Wall
-LDFLAGS = -lpcap
+LUA_VER = 5.2
 
-ifdef LUA_STATIC
-OBJECTS += ./vendor/lib/linux/liblua.a
-CFLAGS += -I ./vendor/include/linux
-LDFLAGS += -lm -ldl
-else
-LDFLAGS += -llua
+ifdef USE_LUA
+LUA_VER = $(USE_LUA)
 endif
 
-.PHONY: all clean install uninstall
+CFLAGS = -O2 -pedantic -ggdb -Wall -I/usr/include/lua$(LUA_VER)
+LDFLAGS = -lpcap -llua$(LUA_VER)
 
 all: $(TARGET)
 
