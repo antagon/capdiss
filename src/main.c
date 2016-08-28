@@ -66,9 +66,9 @@ capdiss_terminate (int signo)
 {
 	loop = 0;
 	exitno = signo;
-	// Reset a signal handler to default and jump back to main function.  This
-	// code breaks out from infinite loop (if there is one), yet still allows
-	// to execute scripts' sigaction hook.
+	/* Reset a signal handler to default and jump back to main function. This
+	 * code breaks out from infinite loop (if there is one), yet still allows
+	 * to execute scripts' sigaction hook. */
 	signal (signo, SIG_DFL);
 	longjmp (signal_script, 1);
 }
@@ -106,7 +106,7 @@ main (int argc, char *argv[])
 
 	flist_init (&files);
 
-	// Setup signal handlers
+	/* Setup signal handlers */
 	signal (SIGINT, capdiss_terminate);
 	signal (SIGTERM, capdiss_terminate);
 
@@ -122,8 +122,8 @@ main (int argc, char *argv[])
 				break;
 
 			case 'F':
-				// Prevent a memory leak, if the option is specified multiple
-				// times.
+				/* Prevent a memory leak, if the option is specified multiple
+				 * times. */
 				if ( bpf != NULL )
 					free (bpf);
 
@@ -158,9 +158,9 @@ main (int argc, char *argv[])
 		goto cleanup;
 	}
 
-	// Determine what type the stdout is. This may be helpful for scripts that
-	// use ASCII color sequences to not use them if stdout is redirected to
-	// another program via anonymous pipe, or to regular file.
+	/* Determine what type the stdout is. This may be helpful for scripts that
+	 * use ASCII color sequences to not use them if stdout is redirected to
+	 * another program via anonymous pipe, or to regular file. */
 	memset (&ifstatus, 0, sizeof (struct stat));
 
 	errno = 0;
@@ -198,9 +198,9 @@ main (int argc, char *argv[])
 			break;
 	}
 
-	//
-	// Load Lua script
-	//
+	/* =============== */
+	/* Load Lua script */
+	/* =============== */
 	memset (&ifstatus, 0, sizeof (struct stat));
 
 	errno = 0;
@@ -210,7 +210,7 @@ main (int argc, char *argv[])
 		goto cleanup;
 	}
 
-	// If stat on a file failed, try to load it as a module using 'require'.
+	/* If stat on a file failed, try to load it as a module using 'require'. */
 	if ( errno == ENOENT || !S_ISREG (ifstatus.st_mode) )
 		script = lscript_new (argv[optind], LSCRIPT_MOD);
 	else
@@ -222,7 +222,7 @@ main (int argc, char *argv[])
 		goto cleanup;
 	}
 
-	// Copy arguments that will be passed to Lua script.
+	/* Copy arguments that will be passed to Lua script. */
 	script_args = (char**) malloc (sizeof (char*) * (argc - optind + 1));
 
 	if ( script_args == NULL ){
@@ -236,7 +236,7 @@ main (int argc, char *argv[])
 	for ( c = 1; c < (argc - optind); c++ )
 		script_args[c] = argv[optind + c];
 
-	// Prepare Lua environment.
+	/* Prepare Lua environment. */
 	if ( lscript_prepare (script, argc - optind, script_args) != 0 ){
 		free (script_args);
 		fprintf (stderr, "%s: cannot prepare Lua environment: %s\n", argv[0], lscript_strerror (script));
@@ -252,7 +252,7 @@ main (int argc, char *argv[])
 		goto cleanup;
 	}
 
-	// Do the long jump back here from a signal handler.
+	/* Do the long jump back here from a signal handler. */
 	if ( setjmp (signal_script) ){
 		lscript_clear_stack (script);
 		goto pass_signal;
@@ -273,7 +273,7 @@ main (int argc, char *argv[])
 
 		if ( pcap_res == NULL ){
 
-			// Are we reading from a standard input?
+			/* Are we reading from a standard input? */
 			if ( file->path[0] == '-' && file->path[1] == '\0' )
 				fprintf (stderr, "%s: cannot interpret input data: %s\n", argv[0], errbuff);
 			else
@@ -283,11 +283,11 @@ main (int argc, char *argv[])
 			goto cleanup;
 		}
 
-		// Reinitialize value of the packet counter for each file.
+		/* Reinitialize value of the packet counter for each file. */
 		pkt_cnt = 0;
 
-		// Get pcap file data link value and convert it to string.
-		// This string is passed to Lua function 'begin'.
+		/* Get pcap file data link value and convert it to string. This string
+		 * is passed to Lua function 'begin'. */
 		linktype = pcap_datalink_val_to_name (pcap_datalink (pcap_res));
 
 		if ( bpf != NULL ){
@@ -337,7 +337,7 @@ main (int argc, char *argv[])
 			rval = pcap_next_ex (pcap_res, &pkt_hdr, &pkt_data);
 
 			if ( rval == -1 ){
-				// Are we reading from a standard input?
+				/* Are we reading from a standard input? */
 				if ( file->path[0] == '-' && file->path[1] == '\0' )
 					fprintf (stderr, "%s: reading a frame from input data failed: %s\n", argv[0], pcap_geterr (pcap_res));
 				else
@@ -346,7 +346,7 @@ main (int argc, char *argv[])
 				exitno = EXIT_FAILURE;
 				goto cleanup;
 			} else if ( rval == -2 ){
-				// EOF
+				/* EOF */
 				break;
 			}
 
@@ -372,7 +372,8 @@ main (int argc, char *argv[])
 					goto cleanup;
 				}
 			} else {
-				// Function not found... no reason to continue reading other packets.
+				/* Function not found... no reason to continue reading other
+				 * packets. */
 				loop = 0;
 				break;
 			}
@@ -388,7 +389,7 @@ main (int argc, char *argv[])
 			}
 		}
 
-		// Close pcap resource, in case we have another file to process...
+		/* Close pcap resource, in case we have another file to process... */
 		pcap_close (pcap_res);
 		pcap_res = NULL;
 	}

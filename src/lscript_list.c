@@ -173,9 +173,9 @@ lscript_prepare (struct lscript *script, int argc, char *argv[])
 
 	luaL_openlibs (script->state);
 
-	//
-	// Set arg variable
-	//
+	/* ================ */
+	/* Set arg variable */
+	/* ================ */
 	lua_createtable (script->state, argc, 0);
 
 	for ( i = 0; i < argc; i++ ){
@@ -190,9 +190,9 @@ lscript_prepare (struct lscript *script, int argc, char *argv[])
 
 	lua_setglobal (script->state, "arg");
 
-	//
-	// Set _CAPDISS_VERSION variable
-	//
+	/* ============================= */
+	/* Set _CAPDISS_VERSION variable */
+	/* ============================= */
 	if ( ! lua_checkstack (script->state, 1) ){
 		luaL_error (script->state, "Lua stack is full");
 		return 1;
@@ -205,9 +205,9 @@ lscript_prepare (struct lscript *script, int argc, char *argv[])
 
 	lua_setglobal (script->state, "_CAPDISS_VERSION");
 
-	//
-	// Set _OS variable
-	//
+	/* ================ */
+	/* Set _OS variable */
+	/* ================ */
 	if ( ! lua_checkstack (script->state, 1) ){
 		luaL_error (script->state, "Lua stack is full");
 		return 1;
